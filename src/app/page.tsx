@@ -61,7 +61,11 @@ export default function Landing() {
               </h1>
             </div>
 
-            <div className="max-w-sm shrink-0">
+            {/* `shrink-0` only belongs in the lg row layout. Applied at every width it pins this
+                column to max-w-sm (384px), which is wider than a 390px viewport minus the shell's
+                padding - so the page overflowed horizontally, clipping the hero and pushing the
+                header's own contents off-screen with it. */}
+            <div className="w-full max-w-sm lg:shrink-0">
               <p className="lede">
                 Nodea is an encrypted compute marketplace built natively on COTI. Agents hire GPU
                 nodes, transmit prompts and settle micro-payments - with the prompt, the rate card,
