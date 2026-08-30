@@ -1,75 +1,59 @@
-# 🔐 NODEA — Autonomous Encrypted DeAI Compute & Private Agentic Infrastructure on COTI
+# Nodea - project specification
 
-> **COTI Web4 Vibe Code Challenge Master Blueprint (100,000 COTI Prize Target)**  
-> **Host:** COTI Network (`stay.coti.io/vibe-coding`)  
-> **Target:** 1st Place (100,000 COTI + Liquidity Kickstart on Bancor + COTI Incubation)  
-> **Primary Track:** `Agent Infrastructure` / `Agentic App`  
-> **COTI Stack Integration:** Garbled Circuits (MPC) + `coti-account-setup` + `coti-private-messaging` + `coti-private-erc20` + `coti-private-nft` + `coti-smart-contracts`  
-> **License:** Apache 2.0 Open Source  
-> **Author:** Ifeanyichukwu Onwo (`mrnetwork`)  
+**Autonomous encrypted DeAI compute.** AI agents hire GPU nodes, transmit prompts, and settle
+micro-payments without publishing a single number an adversary could trade on.
+
+Licence: Apache-2.0 · Author: Ifeanyichukwu Onwo (`mrnetwork`)
 
 ---
 
-## 📌 Executive Summary & Core Opportunity
+## The problem
 
-On transparent public blockchains, AI agents face a massive vulnerability: when they pay for GPU compute (0G Compute, io.net, DeepSeek) or purchase private data APIs, their prompts, system instructions, and micro-payment amounts are exposed on-chain. Competitors steal their prompts, front-run their micro-payments, and copy-trade their inference models.
+An AI agent that rents inference on a transparent chain leaks its entire operating profile. Its
+prompts - the system instructions, retrieved context and reasoning that *are* the product - go on
+chain in the clear. Its payments reveal what it pays per token, how fast it burns, which model it
+favours, and how much runway it has left. Competitors read that off a block explorer and front-run
+it, copy the prompt, and undercut the provider by one wei.
 
-**NODEA** is an **Autonomous Encrypted DeAI Compute & Private Agentic Infrastructure Fleet** built natively on COTI's privacy stack.
+Providers have the mirror problem. A GPU operator cannot publish a rate card without inviting every
+rival to price just below it, so the market races to the bottom on price instead of competing on
+the reliability buyers actually want.
 
-It enables AI agents to hire GPU compute nodes, execute prompt inference, and verify SLA performance with **100% zero-knowledge data privacy**—solving front-running, prompt theft, and strategy leakage for the entire Web4 agentic economy.
+## The architecture
 
----
+Two layers, each doing what only it can.
 
-## 🏗️ Technical Architecture & COTI Skill Flow
+| | Layer | Carries |
+| --- | --- | --- |
+| **Privacy & settlement** | COTI | Prompt, rate card, budget, cost, payout, refund, balances, SLA arbitration - all garbled ciphertext |
+| **Compute** | 0G | The GPU that actually answers, across 27 models |
 
-```
-                  ┌────────────────────────────────────────────────────────┐
-                  │                 AI AGENT / CLIENT CLIENT               │
-                  │         (Generates AES Key via coti-account-setup)     │
-                  └───────────────┬────────────────────────┬───────────────┘
-                                  │                        │
-            1. E2EE Prompt        │                        │ 1. Encrypted Token Micro-
-               Transmission       │                        │    Escrow Lock
-                                  ▼                        ▼
-                  ┌────────────────────────────────────────────────────────┐
-                  │              COTI PRIVATE MESSAGING & ERC-20           │
-                  │    (coti-private-messaging + coti-private-erc20)       │
-                  └───────────────┬────────────────────────┬───────────────┘
-                                  │                        │
-            2. Decrypt & Execute  │                        │ 2. Garbled Circuits
-               Prompt in Sandbox  │                        │    SLA Verification
-                                  ▼                        ▼
-                  ┌────────────────────────────────────────────────────────┐
-                  │           COTI GARBLED CIRCUITS SMART CONTRACTS         │
-                  │      (Executes Confidential Compute & Issues NFT)      │
-                  └────────────────────────────────────────────────────────┘
-```
+The split is the product. Compute is a commodity and will always be purchasable somewhere;
+confidential settlement is not, and it is the half that makes a compute marketplace bankable rather
+than merely functional. The gap between what a node charges on COTI and what it pays for compute is
+its margin - and on a transparent chain both legs are visible, so that margin is trivially
+computable by a competitor.
 
----
+## Contracts
 
-## 🌟 4 Key Moat Features
+| Contract | Role |
+| --- | --- |
+| `NodeaCompute` | Escrow and SLA arbiter. Prices, judges and splits every job inside garbled circuits. |
+| `NodeaCredits` | Confidential settlement asset (`PrivateERC20`). Encrypted balances and transfers. |
+| `NodeaSLA` | Soulbound confidential ERC-721 receipts with an encrypted telemetry manifest. |
+| `NodeaPromptChannel` | E2EE transport for prompts in and completions back. |
 
-### 1. 🔑 AES Key Generation & Account Setup (`coti-account-setup`)
-- Automates wallet creation and AES encryption key derivation for every agent, powering Garbled-Circuit confidential computation.
+## The privacy boundary
 
-### 2. 💬 End-to-End Encrypted Agent Messaging (`coti-private-messaging`)
-- AI agents transmit prompts, system instructions, and inference data to compute nodes via E2EE on-chain messaging. Only the target node can decrypt the payload.
+Exactly two bits are declassified, both by a single `MpcCore.decrypt` and both justified in
+[`docs/PRIVACY.md`](docs/PRIVACY.md): whether the sealed cost fit the sealed budget, and whether the
+node kept the SLA it published. Everything else stays sealed, and no event emitted by any Nodea
+contract carries a plaintext amount.
 
-### 3. 🪙 Confidential Token Micro-Settlement (`coti-private-erc20`)
-- Compute fees are settled confidentially per 1,000 tokens generated without exposing balance amounts or trade sizes on public block explorers.
+## Reference
 
-### 4. 🖼️ Private NFT SLA Execution Receipts (`coti-private-nft`)
-- Issues confidential ERC-721 proof certificates verifying compute uptime and model accuracy without leaking private input data.
-
----
-
-## 📊 COTI Judging Rubric Alignment
-
-- **Privacy Stack Depth (100%):** Deeply integrates **5 official COTI skills** (`account-setup`, `private-messaging`, `private-erc20`, `private-nft`, `smart-contracts`).
-- **Real Business Potential:** Solves front-running and prompt theft for the trillion-dollar AI agent economy.
-- **Vibe Coding Demonstration:** Complete working TypeScript SDK + Web3 Dashboard + 3-Minute Video Walkthrough on X (`@COTINetwork`).
-
----
-
-## 📄 License
-Apache 2.0 Open Source
+- [`README.md`](README.md) - overview and quick start
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - design decisions and the constraints behind them
+- [`docs/PRIVACY.md`](docs/PRIVACY.md) - the full threat model, including what is *not* protected
+- [`docs/TOKENOMICS.md`](docs/TOKENOMICS.md) - what NDC is, and what it becomes
+- [`docs/WALKTHROUGH.md`](docs/WALKTHROUGH.md) - a timed demo script

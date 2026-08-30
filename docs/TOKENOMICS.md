@@ -1,11 +1,10 @@
 # NDC — the compute credit, and what it becomes
 
-**Today, during the COTI Web4 Vibe Code Challenge, NDC is a metering unit and nothing more.**
+**Today, NDC is a metering unit and nothing more.**
 Anyone can mint 500 of it for the price of gas. That is deliberate: a judge should be able to
 evaluate a live mainnet deployment without waiting on us to hand out tokens.
 
-**After the challenge, we launch a real token with liquidity that serves exactly the role NDC
-serves now** — the unit every job on Nodea is priced and settled in. Same function, same contracts,
+**Next, we launch a real token with liquidity that serves exactly the role NDC serves now** — the unit every job on Nodea is priced and settled in. Same function, same contracts,
 real supply. This document states how, so the plan can be judged on its merits rather than assumed.
 
 ---
@@ -103,7 +102,7 @@ Stated plainly, because a roadmap presented as a product is worth less than an h
 | Protocol fee on settled jobs | Planned — contract work |
 
 Everything in the "live" rows can be verified against the deployment today. Everything below it is
-what the first prize's launch support would fund.
+what comes next.
 
 ## Why this is worth launching
 

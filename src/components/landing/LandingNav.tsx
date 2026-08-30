@@ -2,6 +2,7 @@ import Link from "next/link"
 
 const LINKS = [
   { href: "#problem", label: "Problem" },
+  { href: "#layers", label: "Architecture" },
   { href: "#how", label: "How it works" },
   { href: "#stack", label: "COTI stack" },
   { href: "#leaks", label: "What leaks" },

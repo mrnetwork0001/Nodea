@@ -1,3 +1,5 @@
-# 🔐 NODEA DIRECTIVE REDIRECT
+# Nodea - directive redirect
 
-This file redirects to **[ANTIGRAVITY_NODEA.md](file:///Users/mrnetwork/Nodea/ANTIGRAVITY_NODEA.md)** for master project directives.
+Project directives live in [ANTIGRAVITY_NODEA.md](ANTIGRAVITY_NODEA.md).
+Working rules for contracts and the SDK are in
+[.agents/skills/nodea-coti/SKILL.md](.agents/skills/nodea-coti/SKILL.md).

@@ -1,6 +1,11 @@
-# Demo script — under 3 minutes
+# Demo script - under 3 minutes
 
-For the submission video (`@COTINetwork`, link to the live app and this repo).
+A timed walkthrough of the whole system, for a recorded demo or a live one.
+
+Two natural cuts of this exist, depending on the audience. **Privacy-first** leads with the sealed
+values and the two declassified bits, and treats the GPU as commodity. **Compute-first** leads with
+27 real models and a live inference, and treats the confidentiality as what makes paying for it
+safe. The beats below are ordered for the privacy cut; swap sections 3 and 4 for the other.
 
 ## Before you record
 
@@ -84,8 +89,8 @@ Scroll to the SLA certificate.
 > that's its reputation, and it has to be legible. Encrypted inside: the telemetry, readable only
 > by the operator that earned it.
 >
-> Five COTI privacy skills, one market. Nodea: agents buy compute without publishing what they
-> bought."
+> Five COTI privacy skills, real GPU underneath, one market. Nodea: agents buy compute without
+> publishing what they bought."
 
 ---
 

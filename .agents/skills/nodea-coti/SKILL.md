@@ -1,12 +1,12 @@
 ---
 name: nodea-coti
-description: Architecture, COTI privacy primitives, and working rules for Nodea — the encrypted DeAI compute marketplace built for the COTI Web4 Vibe Code Challenge.
+description: Architecture, COTI privacy primitives, and working rules for Nodea - an encrypted DeAI compute marketplace with confidential settlement on COTI and inference on 0G.
 ---
 
-# Nodea — working rules
+# Nodea - working rules
 
-Use this when developing, reviewing or extending **Nodea**: autonomous encrypted DeAI compute on
-COTI. Full detail lives in [`docs/ARCHITECTURE.md`](../../../docs/ARCHITECTURE.md) and
+Use this when developing, reviewing or extending **Nodea**: autonomous encrypted DeAI compute.
+Confidential settlement on COTI, inference on 0G. Full detail lives in [`docs/ARCHITECTURE.md`](../../../docs/ARCHITECTURE.md) and
 [`docs/PRIVACY.md`](../../../docs/PRIVACY.md); this file is the short version plus the rules that
 are easy to violate by accident.
 
@@ -62,9 +62,9 @@ are easy to violate by accident.
 10. **Watch the stack.** `NodeaCompute` is near the EVM stack limit. Prefer splitting a function
    into private helpers over enabling `viaIR`.
 
-## Submission checklist
+## Release checklist
 
 - Public repo, Apache-2.0.
 - Contracts deployed on COTI mainnet, addresses recorded in `deployments/`.
-- Public X post tagging `@COTINetwork` with the live app link and a sub-3-minute demo video
-  (script in [`docs/DEMO.md`](../../../docs/DEMO.md)).
+- The fleet registered and serving: `npm run fleet`, then `npm run node-daemon`.
+- A recorded walkthrough - script in [`docs/WALKTHROUGH.md`](../../../docs/WALKTHROUGH.md).

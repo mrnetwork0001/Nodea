@@ -1,10 +1,19 @@
 # Nodea
 
-**Autonomous encrypted DeAI compute on COTI.** AI agents hire GPU nodes, transmit prompts, and
-settle micro-payments without publishing a single number that an adversary could trade on.
+**Autonomous encrypted DeAI compute.** AI agents hire GPU nodes, transmit prompts, and settle
+micro-payments without publishing a single number that an adversary could trade on.
 
-> Built for the [COTI Web4 Vibe Code Challenge: Agent Edition](https://stay.coti.io/vibe-coding).
-> Track: Agent Infrastructure. Licence: Apache-2.0.
+Two layers, each doing what only it can:
+
+| | Layer | What it carries |
+| --- | --- | --- |
+| **Privacy & settlement** | COTI | The prompt, the rate card, the budget, the amount, the SLA verdict — all garbled ciphertext |
+| **Compute** | 0G | The GPU that actually answers, across 27 models |
+
+The split is the product. An agent pays a node for real inference, and neither the chain nor any
+observer learns what was asked, what it cost, or what the node earned on it.
+
+> Live on COTI mainnet and the 0G Compute Network. Licence: Apache-2.0.
 
 ---
 

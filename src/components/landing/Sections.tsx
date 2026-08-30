@@ -148,7 +148,7 @@ export function HowItWorks() {
   return (
     <Section
       id="how"
-      index="02"
+      index="03"
       eyebrow="How it works"
       title={
         <>
@@ -220,7 +220,7 @@ export function Skills() {
   return (
     <Section
       id="stack"
-      index="03"
+      index="04"
       eyebrow="COTI stack"
       title={
         <>
@@ -291,7 +291,7 @@ export function Declassified() {
   return (
     <Section
       id="leaks"
-      index="04"
+      index="05"
       eyebrow="What leaks"
       title={
         <>
@@ -352,7 +352,7 @@ export function Declassified() {
 export function Audiences() {
   return (
     <Section
-      index="05"
+      index="06"
       eyebrow="Who it is for"
       title={
         <>
@@ -407,6 +407,56 @@ export function Audiences() {
 
 // ---------------------------------------------------------------------------
 
+const LAYERS = [
+  {
+    tag: "COTI",
+    title: "Privacy and settlement",
+    body: "The prompt is sealed for one node. The rate card, the budget, the cost, the payout and every balance are garbled ciphertext. The SLA is judged inside a circuit that never sees a plaintext price. This is the part that cannot be substituted.",
+  },
+  {
+    tag: "0G",
+    title: "The compute underneath",
+    body: "Jobs are served on real GPU across 27 models, from in-house 0G models to frontier ones. A node's rate card is derived from what that model actually costs it, so the economics are real rather than illustrative.",
+  },
+  {
+    tag: "The gap between them",
+    title: "The node's margin, kept private",
+    body: "A node charges on COTI and pays for compute elsewhere. The difference is its margin - and on a transparent chain both legs are visible, so that margin is trivially computable by any competitor. Here it stays as confidential as the prompt did.",
+  },
+] as const
+
+export function Layers() {
+  return (
+    <Section
+      id="layers"
+      index="02"
+      eyebrow="Architecture"
+      title={
+        <>
+          Two layers, each doing
+          <br />
+          what <span className="text-acid">only it can.</span>
+        </>
+      }
+      lede="Compute is a commodity and will always be purchasable somewhere. Confidential settlement is not - and it is the half that makes a compute marketplace bankable rather than merely functional."
+    >
+      <div className="grid gap-3 lg:grid-cols-3">
+        {LAYERS.map((layer) => (
+          <article key={layer.title} className="card p-7">
+            <p className="eyebrow text-acid">{layer.tag}</p>
+            <h3 className="mt-5 font-display text-xl font-bold uppercase leading-tight tracking-tighter">
+              {layer.title}
+            </h3>
+            <p className="muted mt-3">{layer.body}</p>
+          </article>
+        ))}
+      </div>
+    </Section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+
 const TOKEN_PHASES = [
   {
     tag: "Now · live",
@@ -429,7 +479,7 @@ export function Token() {
   return (
     <Section
       id="token"
-      index="06"
+      index="07"
       eyebrow="NDC"
       title={
         <>
@@ -518,7 +568,7 @@ export function Faq() {
   return (
     <Section
       id="faq"
-      index="07"
+      index="08"
       eyebrow="FAQ"
       title={
         <>
@@ -571,7 +621,7 @@ export function Deployment() {
 
   return (
     <Section
-      index="08"
+      index="09"
       eyebrow="Deployment"
       title={
         <>
@@ -612,7 +662,7 @@ export function ClosingCta() {
     <section className="border-t border-void-600 py-20 sm:py-28">
       <div className="card-acid px-8 py-16 text-center sm:px-16 sm:py-24">
         <p className="font-mono text-[10px] uppercase tracking-label text-black/60">
-          COTI Web4 Vibe Code Challenge
+          Live on COTI mainnet · compute on 0G
         </p>
         <h2 className="display mx-auto mt-7 max-w-4xl text-[clamp(2rem,5.5vw,4.5rem)]">
           It&apos;s time agents stopped publishing what they buy.

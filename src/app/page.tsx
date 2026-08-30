@@ -11,6 +11,7 @@ import {
   Faq,
   HowItWorks,
   LandingFooter,
+  Layers,
   Problem,
   Skills,
   Token,
@@ -32,6 +33,8 @@ const MARQUEE = [
   "coti-smart-contracts",
   "garbled circuits",
   "MPC",
+  "0G Compute",
+  "27 models",
 ] as const
 
 export default function Landing() {
@@ -47,7 +50,7 @@ export default function Landing() {
               <p className="eyebrow mb-7 flex items-center gap-3">
                 <span className="text-acid">00</span>
                 <span className="h-px w-8 bg-void-500" />
-                Encrypted DeAI compute
+                Private settlement on COTI · real GPU on 0G
               </p>
               <h1 className="display-xl">
                 AI agents buy GPU compute
@@ -109,6 +112,7 @@ export default function Landing() {
           </section>
 
           <Problem />
+          <Layers />
           <HowItWorks />
           <Skills />
           <Declassified />
