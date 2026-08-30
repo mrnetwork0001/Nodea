@@ -12,6 +12,7 @@
  */
 import { AlertTriangle } from "lucide-react"
 import { useEffect, useRef } from "react"
+import { HoldButton } from "./HoldButton"
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -22,6 +23,13 @@ export interface ConfirmDialogProps {
   cancelLabel?: string
   /** `danger` colours the confirm action and shows a warning mark. */
   tone?: "default" | "danger"
+  /**
+   * Require the confirm action to be held rather than clicked.
+   *
+   * For consequences a click is too cheap for - exposing a key, destroying one - this makes the
+   * action deliberate and, more usefully, abortable partway through.
+   */
+  holdToConfirm?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
@@ -33,6 +41,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel = "Cancel",
   tone = "default",
+  holdToConfirm = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -76,17 +85,31 @@ export function ConfirmDialog({
 
         <div className="muted mt-4 space-y-2">{body}</div>
 
+        {holdToConfirm && (
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-label text-white/30">
+            Press and hold to confirm - release to cancel
+          </p>
+        )}
+
         <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button type="button" className="btn-sm btn-outline" onClick={onCancel} autoFocus>
             {cancelLabel}
           </button>
-          <button
-            type="button"
-            className={tone === "danger" ? "btn-sm btn-danger" : "btn-sm btn-acid"}
-            onClick={onConfirm}
-          >
-            {confirmLabel}
-          </button>
+          {holdToConfirm ? (
+            <HoldButton
+              label={confirmLabel}
+              tone={tone === "danger" ? "danger" : "acid"}
+              onComplete={onConfirm}
+            />
+          ) : (
+            <button
+              type="button"
+              className={tone === "danger" ? "btn-sm btn-danger" : "btn-sm btn-acid"}
+              onClick={onConfirm}
+            >
+              {confirmLabel}
+            </button>
+          )}
         </div>
       </div>
     </dialog>

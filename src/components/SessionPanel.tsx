@@ -337,7 +337,8 @@ function AgentIdentity() {
             </p>
           </>
         }
-        confirmLabel="Forget key"
+        confirmLabel="Hold to forget"
+        holdToConfirm
         onCancel={() => setForgetting(false)}
         onConfirm={() => {
           setForgetting(false)
@@ -472,7 +473,8 @@ function BackupKey({ privateKey }: { privateKey: string }) {
             </p>
           </>
         }
-        confirmLabel="Reveal"
+        confirmLabel="Hold to reveal"
+        holdToConfirm
         onCancel={() => setAsking(false)}
         onConfirm={() => {
           setAsking(false)
