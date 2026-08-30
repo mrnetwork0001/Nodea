@@ -99,7 +99,7 @@ Stated plainly, because a privacy claim with no stated limits is not a serious o
   compute rather than storing value. This is an economic property, not a privacy one, but it is
   worth stating next to them: an operator's encrypted earnings are denominated in a token anyone
   can mint. `setFaucetEnabled(false)` closes the allotment when that trade stops being the right
-  one.
+  one — see [`TOKENOMICS.md`](TOKENOMICS.md) for the launch that follows it.
 
 ## Verifying the claims yourself
 

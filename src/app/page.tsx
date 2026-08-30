@@ -13,6 +13,7 @@ import {
   LandingFooter,
   Problem,
   Skills,
+  Token,
 } from "@/components/landing/Sections"
 
 export const metadata: Metadata = {
@@ -112,6 +113,7 @@ export default function Landing() {
           <Skills />
           <Declassified />
           <Audiences />
+          <Token />
           <Faq />
           <Deployment />
           <ClosingCta />

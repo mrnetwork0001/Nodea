@@ -31,6 +31,11 @@ Nodea moves the *numbers* into COTI's garbled circuits and leaves only the *fact
 | Whether the node met that commitment | The agent's budget and ordered workload |
 | That an SLA certificate was minted | The cost, payout, refund, and both balances |
 
+NDC — the credit every job is priced and settled in — is freely mintable today, so this deployment
+can be evaluated without waiting on us to distribute tokens. **After the challenge we launch a real
+token with liquidity that serves exactly the role NDC serves now.** See
+[`docs/TOKENOMICS.md`](docs/TOKENOMICS.md) for how, and for what is live versus planned.
+
 Exactly **two bits** are deliberately declassified, and both are named in the contract:
 whether the sealed cost fit the sealed budget (which a revert would reveal anyway), and whether
 the node kept the SLA it published (because a reputation nobody can read is not a reputation).
@@ -148,7 +153,7 @@ src/app, src/components   Next.js 14 dashboard
 agent/                Autonomous agent runtime and GPU node daemon
 scripts/              Deploy, seed, narrated end-to-end demo, keygen
 test/                 Off-chain unit tests + live COTI integration suite
-docs/                 Architecture, privacy model, demo script
+docs/                 Architecture, privacy model, tokenomics, demo script
 ```
 
 ## Testing

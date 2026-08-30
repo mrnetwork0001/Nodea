@@ -5,6 +5,7 @@ const LINKS = [
   { href: "#how", label: "How it works" },
   { href: "#stack", label: "COTI stack" },
   { href: "#leaks", label: "What leaks" },
+  { href: "#token", label: "NDC" },
   { href: "#faq", label: "FAQ" },
 ] as const
 

@@ -407,6 +407,90 @@ export function Audiences() {
 
 // ---------------------------------------------------------------------------
 
+const TOKEN_PHASES = [
+  {
+    tag: "Now · live",
+    title: "A metering unit",
+    body: "Every job on Nodea is priced, escrowed and settled in NDC, with balances and amounts encrypted end to end. Anyone can mint 500 for the price of gas — deliberately, so this deployment can be evaluated without waiting on us to hand out tokens.",
+  },
+  {
+    tag: "After the challenge",
+    title: "A real token, same job",
+    body: "We launch a token with liquidity that serves exactly the role NDC serves now. One admin call — setFaucetEnabled(false), already deployed — stops free minting, and supply moves to a fixed cap.",
+  },
+  {
+    tag: "How it trades",
+    title: "Public market, private amounts",
+    body: "A public ERC-20 bridges one-to-one into the private credit through COTI's own PrivacyBridgeERC20 — the pattern already backing PrivacyBridgeUSDCe and WETH. The market is public; the per-job amounts are not.",
+  },
+] as const
+
+export function Token() {
+  return (
+    <Section
+      id="token"
+      index="06"
+      eyebrow="NDC"
+      title={
+        <>
+          The credit today,
+          <br />
+          the <span className="text-acid">token</span> after.
+        </>
+      }
+      lede="Demand is already structural — you cannot hire compute on Nodea without NDC. What is missing is scarcity, and that is a switch we have not yet thrown."
+    >
+      <div className="grid gap-3 lg:grid-cols-3">
+        {TOKEN_PHASES.map((phase) => (
+          <article key={phase.title} className="card p-7">
+            <p className="eyebrow text-acid">{phase.tag}</p>
+            <h3 className="mt-5 font-display text-xl font-bold uppercase leading-tight tracking-tighter">
+              {phase.title}
+            </h3>
+            <p className="muted mt-3">{phase.body}</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="card mt-3 p-7">
+        <h3 className="font-display text-lg font-bold uppercase tracking-tighter">
+          Where value would accrue
+        </h3>
+        <ul className="mt-5 grid gap-x-10 gap-y-3 md:grid-cols-3">
+          {[
+            [
+              "Node staking",
+              "A node locks NDC to register and a breach slashes the stake. Today a breaching node forfeits 40% of one job — about 4 NDC. With capital at stake, a public SLA promise costs something to break.",
+            ],
+            [
+              "Protocol fee",
+              "The escrow retains ~1% of each settled job, charged inside the circuit so it inherits the same confidentiality. It scales with real usage rather than speculation.",
+            ],
+            [
+              "Metering demand",
+              "Once the faucet closes, the only way to hire compute is to acquire NDC. Demand tracks compute hired on the network.",
+            ],
+          ].map(([title, body]) => (
+            <li key={title} className="flex gap-3">
+              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-acid" />
+              <p className="muted">
+                <strong className="font-semibold text-white">{title}.</strong> {body}
+              </p>
+            </li>
+          ))}
+        </ul>
+        <p className="muted mt-6 border-t border-void-700 pt-5">
+          Staking and the protocol fee are contract work, not yet deployed — stated as a plan rather
+          than dressed up as a product. The full note, including what is live versus planned, is in{" "}
+          <code className="font-mono text-acid">docs/TOKENOMICS.md</code>.
+        </p>
+      </div>
+    </Section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+
 const FAQ = [
   {
     q: "If the price is encrypted, how does an agent choose a node?",
@@ -434,7 +518,7 @@ export function Faq() {
   return (
     <Section
       id="faq"
-      index="06"
+      index="07"
       eyebrow="FAQ"
       title={
         <>
@@ -487,7 +571,7 @@ export function Deployment() {
 
   return (
     <Section
-      index="07"
+      index="08"
       eyebrow="Deployment"
       title={
         <>
