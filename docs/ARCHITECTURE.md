@@ -148,6 +148,22 @@ answer that does not fit in a 1,536-byte message. Longer completions split acros
 than truncate, and the agent reassembles by scanning its own inbox — no contract change needed,
 since the channel already guarantees only the sender and recipient can decrypt.
 
+## The fleet
+
+`npm run fleet` lists every chat-capable model the 0G Router serves as a Nodea node - 27 at the
+time of writing, from `0gm-1.0-35b-a3b` at 0.000008 NDC/token to `claude-fable-5` at 0.000801, a
+hundred-fold spread that gives an agent a real choice to make.
+
+Two things it is careful about. Only `chatbot` models are listed: the Router also serves speech,
+image and video, and a node advertises its model inside the certificate it mints, so listing those
+would be a claim it could never honour. And each rate card is **derived from real cost** - the
+model's own Router price times a margin - rather than invented. That makes the operator's
+economics real, and the gap between what a node charges on COTI and what it pays 0G is exactly the
+margin Nodea keeps confidential.
+
+Hardware class, region and SLA promises are derived from where a model sits in the price range, so
+a frontier model is not paired with a latency claim it could not meet.
+
 ## Runtimes
 
 **`agent/run.ts`** — surveys the public fleet, ranks it on reliability evidence (it cannot see

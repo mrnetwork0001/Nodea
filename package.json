@@ -21,6 +21,7 @@
     "deploy:mainnet": "NODEA_NETWORK=cotiMainnet tsx scripts/deploy.ts",
     "deploy:testnet": "NODEA_NETWORK=cotiTestnet tsx scripts/deploy.ts",
     "seed": "tsx scripts/seed.ts",
+    "fleet": "tsx scripts/fleet.ts",
     "e2e": "tsx scripts/e2e.ts",
     "demo": "npm run seed && npm run e2e",
     "agent": "tsx agent/run.ts",

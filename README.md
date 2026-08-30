@@ -99,7 +99,8 @@ onboarding and a seeded demo.
 npm run keygen           # prints three identities; paste them into .env
 #   fund all three — mainnet has no faucet
 npm run deploy           # deploys 4 contracts and wires permissions
-npm run seed             # registers a 3-node demo fleet, funds the agent
+npm run seed             # registers a starter fleet, funds the agent
+npm run fleet            # lists every 0G Router chat model as a node (27 of them)
 ```
 
 To work for free instead, set `NODEA_NETWORK=cotiTestnet` in `.env`, fund the
