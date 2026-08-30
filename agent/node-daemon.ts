@@ -84,13 +84,13 @@ async function serve(
 
   // 2. Learn how much work was paid for — sealed for us, unreadable to anyone else.
   const amounts = await compute.readJobAmounts(operator, deployment.compute, job.id)
-  const orderedKTokens = amounts.workload ?? 0n
-  console.log(`     ordered  ${orderedKTokens}k tokens  (decrypted with the operator's AES key)`)
+  const orderedTokens = amounts.workload ?? 0n
+  console.log(`     ordered  ${orderedTokens} tokens minimum  (decrypted with the operator's AES key)`)
 
   // 3. Run it.
   const result = await runInference(prompt, {
     model: node.modelId,
-    orderedKTokens,
+    orderedTokens,
     degrade,
   })
   if (result.zeroG) {
@@ -101,7 +101,7 @@ async function serve(
     )
   }
   console.log(
-    `     served   ${result.deliveredKTokens}k tokens, ${result.latencyMs}ms TTFT, ` +
+    `     served   ${result.deliveredTokens} tokens, ${result.latencyMs}ms TTFT, ` +
       `${result.uptimeBps / 100}% uptime  [${result.backend}]`,
   )
 
@@ -109,9 +109,9 @@ async function serve(
   // when it is done rather than filling the budget. Say so plainly here: a shortfall is a genuine
   // breach under the contract's rules, not a bug, and the operator should see it coming rather
   // than discover it in the settlement.
-  if (result.deliveredKTokens < orderedKTokens) {
+  if (result.deliveredTokens < orderedTokens) {
     console.log(
-      `     ! short   delivered ${result.deliveredKTokens}k against ${orderedKTokens}k ordered — ` +
+      `     ! short   delivered ${result.deliveredTokens} against ${orderedTokens} ordered - ` +
         `the circuit will record an SLA breach and slash this payout.`,
     )
   }
@@ -141,14 +141,14 @@ async function serve(
 
   const proof = await compute.submitProof(operator, deployment.compute, {
     jobId: job.id,
-    deliveredKTokens: result.deliveredKTokens,
+    deliveredTokens: result.deliveredTokens,
     uptimeBps: result.uptimeBps,
     latencyMs: result.latencyMs,
     attestationDigest,
     manifest: buildManifest({
       job: job.id,
       model: node.modelId,
-      tokens: Number(result.deliveredKTokens) * 1000,
+      tokens: Number(result.deliveredTokens),
       uptimeBps: result.uptimeBps,
       latencyMs: result.latencyMs,
       attestation: attestationDigest.slice(0, 18),

@@ -14,28 +14,28 @@ import { header, networkKey, prepare, explorer } from "./_identities"
 
 const FLEET = [
   {
-    modelId: "llama-3.3-70b-instruct",
+    modelId: "claude-opus-5",
     gpuClass: "H100-80GB-SXM",
     region: "eu-central",
     promisedUptimeBps: 9_950,
     promisedLatencyMs: 400,
-    pricePerKToken: parseCredits("0.85"),
+    pricePerToken: parseCredits("0.00085"),
   },
   {
-    modelId: "deepseek-v3",
+    modelId: "deepseek-v4-flash",
     gpuClass: "A100-80GB",
     region: "us-east",
     promisedUptimeBps: 9_900,
     promisedLatencyMs: 650,
-    pricePerKToken: parseCredits("0.42"),
+    pricePerToken: parseCredits("0.00042"),
   },
   {
-    modelId: "mixtral-8x22b",
+    modelId: "qwen3.8-flash",
     gpuClass: "L40S-48GB",
     region: "ap-southeast",
     promisedUptimeBps: 9_500,
     promisedLatencyMs: 1_200,
-    pricePerKToken: parseCredits("0.19"),
+    pricePerToken: parseCredits("0.00019"),
   },
 ] as const
 
@@ -51,14 +51,14 @@ async function main() {
     const { nodeId, txHash } = await compute.registerNode(operator, deployment.compute, spec)
     console.log(`  node #${nodeId}  ${spec.modelId} on ${spec.gpuClass} (${spec.region})`)
     console.log(`     promises  ${spec.promisedUptimeBps / 100}% uptime, <${spec.promisedLatencyMs}ms TTFT`)
-    console.log(`     price     ${formatCredits(spec.pricePerKToken)} NDC / 1k tokens  — encrypted on chain`)
+    console.log(`     price     ${formatCredits(spec.pricePerToken)} NDC / token  — encrypted on chain`)
     console.log(`     tx        ${explorer(txHash)}\n`)
   }
 
   header("Verifying the rate cards decrypt only for their operator")
   for (const node of await compute.listNodes(operator, deployment.compute)) {
     const price = await compute.readNodePrice(operator, deployment.compute, node.id)
-    console.log(`  node #${node.id}  operator reads ${formatCredits(price)} NDC / 1k tokens`)
+    console.log(`  node #${node.id}  operator reads ${formatCredits(price)} NDC / token`)
   }
   console.log(`\n  A block explorer reading the same storage slots sees only ciphertext.`)
 

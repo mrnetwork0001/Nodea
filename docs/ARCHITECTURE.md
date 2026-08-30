@@ -46,6 +46,17 @@ Two design points worth calling out:
 attached to a prompt the node was never given, or to the same prompt twice. This is what makes the
 messaging integration structural rather than decorative.
 
+**The workload unit is tokens, and it is a floor.** The escrow multiplies two sealed numbers and
+does not know their units, so the convention lives in the SDK - and the first one was wrong.
+Pricing per *thousand* tokens floored a good 120-token answer to zero and slashed a node that had
+done the work. Per-token pricing with the workload read as a **minimum the agent pays for** is the
+convention that survives contact with a real model. A node that runs long has chosen to.
+
+Relatedly, generation is never capped at that minimum. A reasoning model spends its first tokens
+thinking and emits nothing visible, so a ceiling set to the floor truncates before any content
+arrives - a job that settles as SLA MET with an empty answer. The ceiling exists only to bound GPU
+spend, and sits well above the floor.
+
 **Delivered volume is load-bearing.** `submitProof` compares the node's sealed `deliveredKTokens`
 against the sealed `_jobWorkload` recorded at `openJob`. Without it, `encTokensGenerated` would be
 a number the node writes into its own certificate with nothing checking it; with it, a node that

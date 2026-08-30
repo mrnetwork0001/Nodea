@@ -47,7 +47,7 @@ const NETWORK_OK = !NETWORK.isMainnet || MAINNET_OPT_IN
 const RUNNABLE = HAVE_KEYS && NETWORK_OK && isDeployed(NETWORK_KEY)
 
 const PROMPT = "SYSTEM: private alpha. Rank ETH/USDC pools by fee yield 予算は秘密 🔐"
-const PRICE_PER_KTOKEN = parseCredits("0.75")
+const PRICE_PER_TOKEN = parseCredits("0.75")
 const WORKLOAD = 8n
 const BUDGET = parseCredits("20")
 
@@ -77,14 +77,14 @@ const BUDGET = parseCredits("20")
       region: "test",
       promisedUptimeBps: 9_900,
       promisedLatencyMs: 600,
-      pricePerKToken: PRICE_PER_KTOKEN,
+      pricePerToken: PRICE_PER_TOKEN,
     })
     nodeId = registered.nodeId
   })
 
   it("seals the node's rate card so only its operator can read it", async () => {
     expect(await compute.readNodePrice(operator, deployment.compute, nodeId)).to.equal(
-      PRICE_PER_KTOKEN,
+      PRICE_PER_TOKEN,
     )
 
     // The listing an agent sees carries no price field at all — there is nothing to leak.
@@ -128,14 +128,14 @@ const BUDGET = parseCredits("20")
 
     const job = await compute.openJob(agent, deployment.compute, {
       nodeId,
-      kTokens: WORKLOAD,
+      tokens: WORKLOAD,
       maxBudget: BUDGET,
       promptMessageId: prompt.messageId,
       deadline: Math.floor(Date.now() / 1000) + 3600,
     })
 
     // The cost the agent never supplied is the product the circuit computed.
-    const expectedCost = PRICE_PER_KTOKEN * WORKLOAD
+    const expectedCost = PRICE_PER_TOKEN * WORKLOAD
     const escrowed = await compute.readJobAmounts(agent, deployment.compute, job.jobId)
     expect(escrowed.cost).to.equal(expectedCost)
     expect(escrowed.workload).to.equal(WORKLOAD)
@@ -151,7 +151,7 @@ const BUDGET = parseCredits("20")
     const attestation = ethers.keccak256(ethers.toUtf8Bytes(`nodea:test:${job.jobId}`))
     const proof = await compute.submitProof(operator, deployment.compute, {
       jobId: job.jobId,
-      deliveredKTokens: WORKLOAD,
+      deliveredTokens: WORKLOAD,
       uptimeBps: 9_970,
       latencyMs: 320,
       attestationDigest: attestation,
@@ -203,7 +203,7 @@ const BUDGET = parseCredits("20")
 
     const job = await compute.openJob(agent, deployment.compute, {
       nodeId,
-      kTokens: WORKLOAD,
+      tokens: WORKLOAD,
       maxBudget: BUDGET,
       promptMessageId: prompt.messageId,
       deadline: Math.floor(Date.now() / 1000) + 3600,
@@ -213,7 +213,7 @@ const BUDGET = parseCredits("20")
     const proof = await compute.submitProof(operator, deployment.compute, {
       jobId: job.jobId,
       // Half the ordered volume, and slower than promised: two of the three sealed conditions fail.
-      deliveredKTokens: WORKLOAD / 2n,
+      deliveredTokens: WORKLOAD / 2n,
       uptimeBps: 8_500,
       latencyMs: 1_800,
       attestationDigest: attestation,
@@ -229,7 +229,7 @@ const BUDGET = parseCredits("20")
 
     expect(proof.slaMet).to.equal(false)
 
-    const expectedCost = PRICE_PER_KTOKEN * WORKLOAD
+    const expectedCost = PRICE_PER_TOKEN * WORKLOAD
     const settled = await compute.readJobAmounts(agent, deployment.compute, job.jobId)
 
     // SLA_SLASH_BPS is 4000, so a breached job pays 60% and returns 40%.

@@ -39,8 +39,8 @@ import {
 
 export interface InferenceResult {
   completion: string
-  /** Tokens generated, in thousands — the unit the escrow prices and compares in-circuit. */
-  deliveredKTokens: bigint
+  /** Tokens generated - the unit the escrow prices and compares in-circuit. */
+  deliveredTokens: bigint
   /** Measured time to first token. */
   latencyMs: number
   /** Measured uptime over the job window, in basis points. */
@@ -53,13 +53,29 @@ export interface InferenceResult {
 
 export interface InferenceOptions {
   model: string
-  /** What the agent ordered, in thousands of tokens. */
-  orderedKTokens: bigint
+  /** The minimum output the agent paid for, in tokens. */
+  orderedTokens: bigint
   /** Force a deliberate SLA breach, to demonstrate in-circuit slashing. */
   degrade?: boolean
 }
 
 const REMOTE_TIMEOUT_MS = 60_000
+
+/**
+ * Headroom above the minimum the agent paid for.
+ *
+ * The sealed workload is a *floor*, not a quota, so capping generation at it is exactly wrong: a
+ * reasoning model spends its first tokens thinking and emits nothing visible, and a cap set to
+ * the floor truncates before any content arrives - a job that settles as SLA MET with an empty
+ * answer. The ceiling exists only so a node cannot burn unbounded GPU on one job.
+ */
+const OUTPUT_HEADROOM = 8
+const MIN_OUTPUT_CEILING = 1_024
+
+/** Generation ceiling for a job whose paid-for minimum is `ordered` tokens. */
+function outputCeiling(ordered: bigint): number {
+  return Math.max(MIN_OUTPUT_CEILING, Number(ordered) * OUTPUT_HEADROOM)
+}
 
 export async function runInference(
   prompt: string,
@@ -81,7 +97,7 @@ export async function runInference(
     completion,
     // A healthy node delivers what was ordered; a degraded one comes up short, which the
     // garbled circuit catches without either party revealing the numbers.
-    deliveredKTokens: options.degrade ? options.orderedKTokens / 2n : options.orderedKTokens,
+    deliveredTokens: options.degrade ? options.orderedTokens / 2n : options.orderedTokens,
     latencyMs,
     uptimeBps: options.degrade ? 8_500 : 9_970,
     backend: endpoint ? "http" : "local",
@@ -91,27 +107,26 @@ export async function runInference(
 /**
  * Serve the job through the 0G Compute Router.
  *
- * Delivered volume is what the Router actually billed, floored to whole thousands because that is
- * the unit `NodeaCompute` compares in-circuit against the order. Flooring is deliberate: it can
- * only understate the node's own delivery, so a rounding artefact costs the node rather than
- * shorting the agent.
+ * Delivered volume is exactly what the Router billed, in tokens. No rounding: a thousand-token
+ * unit floored a good 120-token answer to zero and slashed a node that had done the work.
  */
 async function runOnRouter(prompt: string, options: InferenceOptions): Promise<InferenceResult> {
   const model = resolveRouterModel(options.model, await listRouterModels())
 
-  const maxTokens = Number(options.orderedKTokens) * 1000
   const started = Date.now()
   const result = await runRouterInference(
     prompt,
     model,
     // A degraded node deliberately under-delivers, so the circuit has something to catch.
-    options.degrade ? Math.max(1, Math.floor(maxTokens / 2)) : maxTokens,
+    options.degrade
+      ? Math.max(1, Math.floor(Number(options.orderedTokens) / 2))
+      : outputCeiling(options.orderedTokens),
   )
   const latencyMs = Date.now() - started
 
   return {
     completion: result.content,
-    deliveredKTokens: BigInt(Math.floor(result.completionTokens / 1000)),
+    deliveredTokens: BigInt(result.completionTokens),
     latencyMs,
     // Real measurement is the point of using 0G at all, so uptime is the only figure still
     // self-reported here - see the oracle caveat in docs/PRIVACY.md.
@@ -133,31 +148,28 @@ async function runOnRouter(prompt: string, options: InferenceOptions): Promise<I
  * the provider for at most that many, so the node cannot overspend on GPU relative to what it was
  * paid — the one place where the COTI-side economics have to reach into the 0G-side request.
  *
- * Delivered volume is what 0G actually billed, rounded down to whole thousands, because that is
- * the unit `NodeaCompute` compares in-circuit against the order. Rounding down is deliberate: it
- * can only ever understate the node's own delivery, so a rounding artefact costs the node rather
- * than shorting the agent.
+ * Delivered volume is exactly what the provider billed, in tokens. No rounding: a thousand-token
+ * unit floored a good 120-token answer to zero and slashed a node that had done the work.
  */
 async function runOnZeroG(prompt: string, options: InferenceOptions): Promise<InferenceResult> {
   const { broker } = await connectZeroG()
   const service = await selectService(broker, options.model)
 
-  const maxTokens = Number(options.orderedKTokens) * 1000
   const started = Date.now()
   const result = await runZeroGInference(
     broker,
     service,
     prompt,
     // A degraded node deliberately under-delivers, so the circuit has something to catch.
-    options.degrade ? Math.max(1, Math.floor(maxTokens / 2)) : maxTokens,
+    options.degrade
+      ? Math.max(1, Math.floor(Number(options.orderedTokens) / 2))
+      : outputCeiling(options.orderedTokens),
   )
   const latencyMs = Date.now() - started
 
-  const deliveredKTokens = BigInt(Math.floor(result.completionTokens / 1000))
-
   return {
     completion: result.content,
-    deliveredKTokens,
+    deliveredTokens: BigInt(result.completionTokens),
     latencyMs,
     // Real measurement is the point of using 0G at all, so uptime is the only figure still
     // self-reported here — see the oracle caveat in docs/PRIVACY.md.

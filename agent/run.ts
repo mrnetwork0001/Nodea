@@ -86,12 +86,12 @@ async function main() {
 
   const job = await compute.openJob(agent, deployment.compute, {
     nodeId: chosen.id,
-    kTokens: options.kTokens,
+    tokens: options.tokens,
     maxBudget: options.budget,
     promptMessageId: prompt.messageId,
     deadline: Math.floor(Date.now() / 1000) + options.deadlineSeconds,
   })
-  console.log(`\n  job #${job.jobId} opened for ${options.kTokens}k tokens`)
+  console.log(`\n  job #${job.jobId} opened for a minimum of ${options.tokens} tokens`)
   console.log(`  tx ${explorer(job.txHash)}`)
 
   const opened = await compute.readJobAmounts(agent, deployment.compute, job.jobId)
@@ -127,7 +127,7 @@ async function main() {
   console.log(`  SLA ${settled.slaMet ? "MET" : "BREACHED"} (the one public bit)`)
   console.log(`  paid to node   ${formatCredits(amounts.payout ?? 0n)} NDC`)
   console.log(`  returned       ${formatCredits(amounts.refund ?? 0n)} NDC`)
-  console.log(`  delivered      ${amounts.delivered ?? 0n}k tokens vs ${amounts.workload ?? 0n}k ordered`)
+  console.log(`  delivered      ${amounts.delivered ?? 0n} tokens vs ${amounts.workload ?? 0n} minimum`)
   console.log(`  balance        ${formatCredits(before)} -> ${formatCredits(after)} NDC`)
 
   if (settled.certificateId > 0) {
@@ -169,7 +169,7 @@ async function waitForSettlement(
 
 interface AgentOptions {
   prompt: string
-  kTokens: bigint
+  tokens: bigint
   budget: bigint
   model?: string
   minUptimeBps?: number
@@ -179,7 +179,7 @@ interface AgentOptions {
 function parseArgs(argv: string[]): AgentOptions {
   const options: AgentOptions = {
     prompt: DEFAULT_PROMPT,
-    kTokens: 12n,
+    tokens: 400n,
     budget: parseCredits("25"),
     deadlineSeconds: 3_600,
   }
@@ -189,7 +189,7 @@ function parseArgs(argv: string[]): AgentOptions {
     const arg = argv[i]
     switch (arg) {
       case "--tokens":
-        options.kTokens = BigInt(argv[++i].replace(/k$/i, ""))
+        options.tokens = BigInt(argv[++i].replace(/k$/i, ""))
         break
       case "--budget":
         options.budget = parseCredits(argv[++i])

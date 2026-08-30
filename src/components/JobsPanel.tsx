@@ -137,9 +137,9 @@ function JobRow({
 
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <SealedValue
-              label="Workload ordered"
+              label="Minimum ordered"
               disabled={!canDecrypt}
-              fetcher={sealed("jobWorkloadFor", (value) => `${value}k tokens`)}
+              fetcher={sealed("jobWorkloadFor", (value) => `${value} tokens`)}
             />
             <SealedValue
               label="Escrowed cost"
@@ -147,9 +147,9 @@ function JobRow({
               fetcher={sealed("jobCostFor", (value) => `${formatCredits(value)} NDC`)}
             />
             <SealedValue
-              label="Workload delivered"
+              label="Tokens delivered"
               disabled={!canDecrypt}
-              fetcher={sealed("jobDeliveredFor", (value) => `${value}k tokens`)}
+              fetcher={sealed("jobDeliveredFor", (value) => `${value} tokens`)}
             />
             <SealedValue
               label="Paid to node"

@@ -61,8 +61,8 @@ Everything else stays sealed. See [`docs/PRIVACY.md`](docs/PRIVACY.md) for the f
 node     registerNode(model, gpu, region, promises, enc(price/1k))
 agent    promptChannel.sendMessage(node, enc(prompt))              -> messageId
 agent    credits.approve(escrow, enc(maxBudget))
-agent    openJob(nodeId, enc(kTokens), enc(maxBudget), messageId, deadline)
-           |- cost = sealed(price) x sealed(kTokens)                 garbled circuit
+agent    openJob(nodeId, enc(tokens), enc(maxBudget), messageId, deadline)
+           |- cost = sealed(price/token) x sealed(min tokens)        garbled circuit
            |- require cost <= sealed(budget)                         1 declassified bit
            `- escrow cost, agent -> contract                         encrypted transfer
 node     sendMessage(agent, enc(completion))                     the answer, sealed for the agent

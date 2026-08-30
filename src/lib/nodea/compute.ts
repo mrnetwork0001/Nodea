@@ -34,14 +34,27 @@ export interface RegisterNodeParams {
   promisedUptimeBps: number
   /** Public commitment, in milliseconds, for time to first token. */
   promisedLatencyMs: number
-  /** Confidential rate card: NDC base units per 1,000 generated tokens. */
-  pricePerKToken: bigint
+  /**
+   * Confidential rate card: NDC base units per generated token.
+   *
+   * Per *token*, not per thousand. The escrow multiplies this by the sealed workload, and a
+   * thousand-token unit is far too coarse for real generation: a good two-sentence answer is
+   * about 120 tokens, which floors to zero thousands and reads as total non-delivery. The
+   * contract only multiplies two sealed numbers, so the unit is a convention - and this is the
+   * one that survives contact with a real model.
+   */
+  pricePerToken: bigint
 }
 
 export interface OpenJobParams {
   nodeId: number
-  /** Workload ordered, in thousands of tokens. Sealed. */
-  kTokens: bigint
+  /**
+   * The minimum output the agent is paying for, in tokens. Sealed.
+   *
+   * A floor rather than a quota: the node must deliver at least this much or the circuit records
+   * a breach. A model that runs long is the node's own affair - it chose to.
+   */
+  tokens: bigint
   /** The most the agent will pay for this job. Sealed. */
   maxBudget: bigint
   /** Id of the E2EE prompt already delivered to this node. */
@@ -52,8 +65,8 @@ export interface OpenJobParams {
 
 export interface SubmitProofParams {
   jobId: number
-  /** Workload actually produced, in thousands of tokens. Sealed and compared in-circuit. */
-  deliveredKTokens: bigint
+  /** Output actually produced, in tokens. Sealed and compared in-circuit against the floor. */
+  deliveredTokens: bigint
   /** Measured uptime, in basis points. Sealed. */
   uptimeBps: number
   /** Measured time to first token, in milliseconds. Sealed. */
@@ -75,7 +88,7 @@ export async function registerNode(
 ): Promise<{ nodeId: number; txHash: string }> {
   const compute = computeContract(computeAddress, signer as unknown as ContractRunner)
   const encryptedPrice = (await signer.encryptValue256(
-    params.pricePerKToken,
+    params.pricePerToken,
     computeAddress,
     REGISTER_NODE_SELECTOR,
   )) as itUint256
@@ -99,11 +112,11 @@ export async function updateNodePrice(
   signer: CotiSigner,
   computeAddress: string,
   nodeId: number,
-  pricePerKToken: bigint,
+  pricePerToken: bigint,
 ): Promise<{ txHash: string }> {
   const compute = computeContract(computeAddress, signer as unknown as ContractRunner)
   const encrypted = (await signer.encryptValue256(
-    pricePerKToken,
+    pricePerToken,
     computeAddress,
     UPDATE_PRICE_SELECTOR,
   )) as itUint256
@@ -192,8 +205,8 @@ export async function openJob(
 ): Promise<{ jobId: number; txHash: string }> {
   const compute = computeContract(computeAddress, signer as unknown as ContractRunner)
 
-  const encryptedKTokens = (await signer.encryptValue256(
-    params.kTokens,
+  const encryptedTokens = (await signer.encryptValue256(
+    params.tokens,
     computeAddress,
     OPEN_JOB_SELECTOR,
   )) as itUint256
@@ -206,7 +219,7 @@ export async function openJob(
   const receipt = await (
     await compute.openJob(
       params.nodeId,
-      encryptedKTokens,
+      encryptedTokens,
       encryptedBudget,
       params.promptMessageId,
       params.deadline,
@@ -232,7 +245,7 @@ export async function submitProof(
   const compute = computeContract(computeAddress, signer as unknown as ContractRunner)
 
   const encryptedTokens = (await signer.encryptValue256(
-    params.deliveredKTokens,
+    params.deliveredTokens,
     computeAddress,
     SUBMIT_PROOF_SELECTOR,
   )) as itUint256

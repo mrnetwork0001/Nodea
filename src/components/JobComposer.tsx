@@ -70,7 +70,7 @@ export function JobComposer({
   const { signer, status, deployment, network, signsLocally } = useWallet()
 
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT)
-  const [kTokens, setKTokens] = useState("12")
+  const [tokens, setTokens] = useState("400")
   const [budget, setBudget] = useState("25")
   const [steps, setSteps] = useState<Record<StepKey, StepState>>({
     prompt: { status: "idle" },
@@ -111,9 +111,9 @@ export function JobComposer({
     setSteps({ prompt: { status: "idle" }, approve: { status: "idle" }, open: { status: "idle" } })
 
     try {
-      const workload = BigInt(kTokens || "0")
+      const workload = BigInt(tokens || "0")
       const ceiling = parseCredits(budget || "0")
-      if (workload <= 0n) throw new Error("Workload must be at least 1k tokens.")
+      if (workload <= 0n) throw new Error("Ask for at least one token.")
       if (ceiling <= 0n) throw new Error("Budget must be greater than zero.")
 
       mark("prompt", { status: "running" })
@@ -148,7 +148,7 @@ export function JobComposer({
       mark("open", { status: "running" })
       const job = await compute.openJob(signer, deployment.compute, {
         nodeId: node.id,
-        kTokens: workload,
+        tokens: workload,
         maxBudget: ceiling,
         promptMessageId: sealed.messageId,
         deadline: Math.floor(Date.now() / 1000) + 3600,
@@ -209,14 +209,14 @@ export function JobComposer({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="nodea-workload" className="eyebrow mb-2 block">
-              Workload (k tokens)
+              Minimum output (tokens)
             </label>
             <input
               id="nodea-workload"
               className="field font-mono"
               inputMode="numeric"
-              value={kTokens}
-              onChange={(event) => setKTokens(event.target.value.replace(/\D/g, ""))}
+              value={tokens}
+              onChange={(event) => setTokens(event.target.value.replace(/\D/g, ""))}
             />
           </div>
           <div>

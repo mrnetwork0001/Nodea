@@ -20,7 +20,7 @@ const PROMPT =
   "SYSTEM: You are an arbitrage scout. Rank ETH/USDC pools by 24h fee yield " +
   "net of gas, and flag any pool whose depth fell >30% this hour."
 
-const WORKLOAD_KTOKENS = 12n // 12,000 generated tokens
+const WORKLOAD_TOKENS = 12n // 12,000 generated tokens
 const MAX_BUDGET = parseCredits("25")
 
 async function main() {
@@ -70,14 +70,14 @@ async function main() {
   const deadline = Math.floor(Date.now() / 1000) + 3600
   const job = await compute.openJob(agent, deployment.compute, {
     nodeId: node.id,
-    kTokens: WORKLOAD_KTOKENS,
+    tokens: WORKLOAD_TOKENS,
     maxBudget: MAX_BUDGET,
     promptMessageId: prompt.messageId,
     deadline,
   })
   console.log(`  job #${job.jobId} opened`)
   console.log(`  tx    ${explorer(job.txHash)}`)
-  console.log(`\n  inside the circuit:  cost = sealed(price) x sealed(${WORKLOAD_KTOKENS}k tokens)`)
+  console.log(`\n  inside the circuit:  cost = sealed(price) x sealed(${WORKLOAD_TOKENS} tokens)`)
   console.log(`                       assert cost <= sealed(budget)`)
   console.log(`                       escrow cost, agent -> contract, as an encrypted transfer`)
 
@@ -88,26 +88,26 @@ async function main() {
   // -------------------------------------------------------------------------
   header("4/5  Proving execution and settling  (garbled-circuit SLA arbitration)")
   // -------------------------------------------------------------------------
-  const measured = { uptimeBps: 9_970, latencyMs: 310, deliveredKTokens: 12n }
+  const measured = { uptimeBps: 9_970, latencyMs: 310, deliveredTokens: 12n }
   const attestation = ethers.keccak256(
-    ethers.toUtf8Bytes(`nodea:${job.jobId}:${node.modelId}:${measured.deliveredKTokens}`),
+    ethers.toUtf8Bytes(`nodea:${job.jobId}:${node.modelId}:${measured.deliveredTokens}`),
   )
 
   console.log(`  node's measurements (sealed on submission):`)
   console.log(`    uptime    ${measured.uptimeBps / 100}%   vs promise ${node.promisedUptimeBps / 100}%`)
   console.log(`    latency   ${measured.latencyMs}ms   vs promise ${node.promisedLatencyMs}ms`)
-  console.log(`    delivered ${measured.deliveredKTokens}k   vs ordered ${WORKLOAD_KTOKENS}k`)
+  console.log(`    delivered ${measured.deliveredTokens}   vs minimum ${WORKLOAD_TOKENS}`)
 
   const proof = await compute.submitProof(operator, deployment.compute, {
     jobId: job.jobId,
-    deliveredKTokens: measured.deliveredKTokens,
+    deliveredTokens: measured.deliveredTokens,
     uptimeBps: measured.uptimeBps,
     latencyMs: measured.latencyMs,
     attestationDigest: attestation,
     manifest: buildManifest({
       job: job.jobId,
       model: node.modelId,
-      tokens: Number(measured.deliveredKTokens) * 1000,
+      tokens: Number(measured.deliveredTokens),
       uptimeBps: measured.uptimeBps,
       latencyMs: measured.latencyMs,
       attestation: attestation.slice(0, 18),
