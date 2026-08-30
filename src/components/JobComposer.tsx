@@ -67,7 +67,7 @@ export function JobComposer({
   node: NodeListing | null
   onJobOpened: () => void
 }) {
-  const { signer, status, deployment, network } = useWallet()
+  const { signer, status, deployment, network, signsLocally } = useWallet()
 
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT)
   const [kTokens, setKTokens] = useState("12")
@@ -292,15 +292,22 @@ export function JobComposer({
         )}
 
         <div className="rounded-xl border border-void-600 bg-void-950 px-4 py-3">
-          <p className="muted">
-            <strong className="font-semibold text-white">
-              ~{signatures} wallet approvals, then 3 transactions.
-            </strong>{" "}
-            COTI signs each 8-byte cell of the prompt separately, so a browser wallet asks once per
-            cell. Shorten the prompt to reduce it - or run{" "}
-            <code className="font-mono text-acid">npm run agent</code>, which holds a key and signs
-            locally with no popups at all.
-          </p>
+          {signsLocally ? (
+            <p className="muted">
+              <strong className="font-semibold text-white">3 transactions, no approvals.</strong> The
+              agent holds its own key, so every sealed value is signed locally - the same path the
+              CLI agent and the scripts use.
+            </p>
+          ) : (
+            <p className="muted">
+              <strong className="font-semibold text-white">
+                ~{signatures} wallet approvals, then 3 transactions.
+              </strong>{" "}
+              COTI signs each 8-byte cell of the prompt separately, so a browser wallet asks once per
+              cell. Switch to <strong className="font-semibold text-white">agent mode</strong> in the
+              session panel to sign locally instead.
+            </p>
+          )}
         </div>
 
         <button

@@ -6,7 +6,7 @@ import { useWallet } from "@/lib/wallet"
 import { Address, Badge, Spinner } from "./ui"
 
 export function Header() {
-  const { status, address, network, connect, onboard, disconnect, hasWallet } = useWallet()
+  const { mode, status, address, network, connect, onboard, disconnect, hasWallet } = useWallet()
 
   return (
     <header className="sticky top-0 z-40 border-b border-void-600 bg-void/85 backdrop-blur-md">
@@ -21,6 +21,10 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Badge tone="muted">{network.name}</Badge>
 
+          <Badge tone={mode === "agent" ? "acid" : "muted"}>
+            {mode === "agent" ? "agent mode" : "wallet mode"}
+          </Badge>
+
           {status === "ready" && address && (
             <>
               <Badge tone="acid">
@@ -28,9 +32,11 @@ export function Header() {
                 AES key active
               </Badge>
               <Address value={address} network={network} />
-              <button type="button" className="btn-sm btn-outline" onClick={disconnect}>
-                disconnect
-              </button>
+              {mode === "wallet" && (
+                <button type="button" className="btn-sm btn-outline" onClick={disconnect}>
+                  disconnect
+                </button>
+              )}
             </>
           )}
 
@@ -48,7 +54,7 @@ export function Header() {
             </span>
           )}
 
-          {(status === "disconnected" || status === "connecting") && (
+          {mode === "wallet" && (status === "disconnected" || status === "connecting") && (
             <button
               type="button"
               className="btn-sm btn-acid"

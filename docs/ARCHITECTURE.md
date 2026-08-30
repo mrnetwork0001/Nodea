@@ -167,6 +167,26 @@ short prompt. Long workloads belong in the agent runtime, which holds a key and 
 This is the sharpest difference between the two signer paths, and it is worth knowing before
 designing any browser flow that seals a string on COTI.
 
+The console therefore offers both, and the choice is real rather than cosmetic:
+
+| Mode | Identity | Sealing a prompt |
+| --- | --- | --- |
+| **Agent** (default) | A key generated or imported into the browser | Signed locally, **no prompts** |
+| **Wallet** | MetaMask | One `personal_sign` per 8-byte cell |
+
+Agent mode is not a workaround for the popup problem. Nodea's user *is* an agent — a program that
+holds a key and acts on its own — so modelling that in the browser is the honest shape of the
+product, and it runs the exact `Wallet` path the CLI and every script already use. Wallet mode
+stays because a human should be able to drive it too, and because it demonstrates COTI's
+`JsonRpcSigner` path working against a real browser extension.
+
+Both produce something satisfying `CotiSigner`, so every component above this layer is identical
+either way. That interface was in the SDK from the first commit; the console simply exposes both
+halves of it.
+
+The browser key is a hot key in `localStorage`, scoped by chain, in the same family as the session
+keys agent infrastructure generally uses. The UI says so, and it can be exported or destroyed.
+
 ## Reading empty ciphertext
 
 An account that has never held credits has all-zero ciphertext in storage. Decrypting that does
