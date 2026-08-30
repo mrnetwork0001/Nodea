@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  @apply bg-ink-950 text-slate-200 antialiased;
+}
+
+body {
+  /* A faint field of light behind the whole surface, so the dark ground reads as depth rather
+     than as a flat black rectangle. */
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(91, 108, 240, 0.13), transparent),
+    radial-gradient(ellipse 60% 45% at 90% 10%, rgba(34, 195, 168, 0.07), transparent);
+  background-attachment: fixed;
+}
+
+@layer components {
+  .panel {
+    @apply rounded-xl border border-ink-700/70 bg-ink-900/60 backdrop-blur-sm;
+  }
+
+  .panel-header {
+    @apply flex items-center justify-between gap-3 border-b border-ink-700/60 px-5 py-3.5;
+  }
+
+  .label {
+    @apply text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+      transition-colors disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-primary {
+    @apply btn bg-seal-500 text-white hover:bg-seal-400;
+  }
+
+  .btn-ghost {
+    @apply btn border border-ink-600 bg-ink-800/60 text-slate-300 hover:border-ink-600 hover:bg-ink-700/60;
+  }
+
+  .btn-clear {
+    @apply btn border border-clear-500/40 bg-clear-500/10 text-clear-400 hover:bg-clear-500/20;
+  }
+
+  .field {
+    @apply w-full rounded-lg border border-ink-700 bg-ink-950/70 px-3 py-2 text-sm text-slate-200
+      placeholder:text-slate-600 focus:border-seal-500/70 focus:outline-none focus:ring-1
+      focus:ring-seal-500/40;
+  }
+
+  /* A value that is encrypted on chain: monospace, dimmed, and visibly not-a-number. */
+  .ciphertext {
+    @apply truncate font-mono text-xs text-seal-400/70;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium;
+  }
+}
+
+/* Long ciphertext strings should scroll, never widen the page. */
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.scroll-x::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scroll-x::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-ink-600;
+}

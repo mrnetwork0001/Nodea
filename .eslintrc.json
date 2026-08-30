@@ -1,0 +1,4 @@
+{
+  "extends": "next/core-web-vitals",
+  "ignorePatterns": ["artifacts/**", ".next/**", "node_modules/**", "src/lib/nodea/abi.ts"]
+}
