@@ -95,6 +95,11 @@ Stated plainly, because a privacy claim with no stated limits is not a serious o
 - **AES key custody.** The key is derived through `AccountOnboard` and cached in `localStorage` in
   the browser, scoped by address and chain. It never reaches a server — there is no Nodea backend —
   but anyone with access to the browser profile has it.
+- **NDC is not scarce.** `claimFaucet` mints a fixed allotment to any address once, so NDC meters
+  compute rather than storing value. This is an economic property, not a privacy one, but it is
+  worth stating next to them: an operator's encrypted earnings are denominated in a token anyone
+  can mint. `setFaucetEnabled(false)` closes the allotment when that trade stops being the right
+  one.
 
 ## Verifying the claims yourself
 

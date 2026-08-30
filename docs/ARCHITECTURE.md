@@ -53,8 +53,13 @@ bills for 100k tokens and returns 2k gets slashed by the circuit.
 
 ### `NodeaCredits` — confidential settlement
 
-Extends COTI `PrivateERC20` at 6 decimals, plus a one-shot public testnet faucet (the faucet amount
-is identical for everyone, so it leaks nothing; every subsequent movement is encrypted).
+Extends COTI `PrivateERC20` at 6 decimals, plus a one-shot open allotment — the amount is identical
+for everyone, so claiming it leaks nothing, and every subsequent movement is encrypted.
+
+The allotment is claimable by anyone, which makes NDC a metering unit for compute rather than a
+scarce asset: a node operator's earnings are denominated in something any address can mint once.
+That is the right trade for an evaluatable demo, and `setFaucetEnabled(false)` closes it whenever
+supply should sit under `MINTER_ROLE` alone.
 
 The escrow moves value with `transferFromGT` / `transferGT`, which take an already-garbled
 `gtUint256`. That is what lets `NodeaCompute` compute a cost inside the circuit and settle it

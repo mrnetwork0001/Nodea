@@ -42,7 +42,7 @@ export async function balanceOf(
   return signer.decryptValue256(normalizeCtUint256(ciphertext))
 }
 
-/** Claim the one-shot testnet allotment so a fresh agent can hire compute immediately. */
+/** Claim the one-shot open allotment so a fresh agent can hire compute immediately. */
 export async function claimFaucet(
   signer: CotiSigner,
   creditsAddress: string,

@@ -112,6 +112,11 @@ export const NodeaCreditsAbi = [
   },
   {
     "inputs": [],
+    "name": "FaucetClosed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "PublicAmountsDisabled",
     "type": "error"
   },
@@ -247,6 +252,19 @@ export const NodeaCreditsAbi = [
       }
     ],
     "name": "FaucetDrip",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "enabled",
+        "type": "bool"
+      }
+    ],
+    "name": "FaucetEnabledSet",
     "type": "event"
   },
   {
@@ -854,6 +872,19 @@ export const NodeaCreditsAbi = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "faucetEnabled",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "bytes32",
@@ -1166,6 +1197,19 @@ export const NodeaCreditsAbi = [
         "type": "bool"
       }
     ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "enabled",
+        "type": "bool"
+      }
+    ],
+    "name": "setFaucetEnabled",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
