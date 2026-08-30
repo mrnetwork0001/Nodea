@@ -1,5 +1,5 @@
 /**
- * COTI skill 3 — `coti-private-erc20`.
+ * COTI skill 3 - `coti-private-erc20`.
  *
  * NodeaCredits (NDC) is the settlement asset for compute. Balances, allowances and every transfer
  * amount are garbled ciphertext on chain, which closes two leaks that are fatal to an agent
@@ -29,7 +29,7 @@ export const TRANSFER_SELECTOR = "0x83ae57f4"
  * Decrypt the caller's own NDC balance.
  *
  * An account that has never held credits has all-zero ciphertext in storage, and decrypting that
- * does **not** yield zero — it yields a garbage 70-digit number, because there is no plaintext
+ * does **not** yield zero - it yields a garbage 70-digit number, because there is no plaintext
  * behind it to recover. (`decryptUint` short-circuits the zero case; `decryptUint256` does not.)
  * Checking for canonical empty storage first is what makes a fresh wallet read `0` instead of
  * nonsense, which is exactly what an operator sees before its first job settles.
@@ -77,7 +77,7 @@ export async function hasClaimedFaucet(
 /**
  * Grant an encrypted spending allowance to the compute escrow.
  *
- * The allowance is the one figure an agent sizes by hand — the job's actual cost is computed
+ * The allowance is the one figure an agent sizes by hand - the job's actual cost is computed
  * inside the garbled circuit from the node's sealed price, so the agent never has to learn it in
  * order to pay it.
  *

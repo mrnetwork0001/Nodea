@@ -4,7 +4,7 @@
  * The signature interaction of the dashboard.
  *
  * Every confidential quantity in Nodea arrives from the chain as a ciphertext and stays one until
- * the holder of the right AES key decrypts it — in this browser, with no server involved. This
+ * the holder of the right AES key decrypts it - in this browser, with no server involved. This
  * component shows both states of the same value so the difference is visible rather than asserted:
  * the ciphertext as it actually sits on chain, and the plaintext only the entitled party can
  * produce from it.

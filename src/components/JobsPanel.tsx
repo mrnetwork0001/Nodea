@@ -4,7 +4,7 @@
  * The agent's jobs, with every amount still sealed until you ask for it.
  *
  * The row header is everything the chain publishes about a job: which node, what state, whether
- * the SLA held. Underneath, five quantities that exist only as ciphertext — and each one decrypts
+ * the SLA held. Underneath, five quantities that exist only as ciphertext - and each one decrypts
  * in this browser, for this account, on demand. Expanding a row is the fastest way to see the
  * boundary the whole protocol is built around.
  */
@@ -33,7 +33,7 @@ export function JobsPanel({ refreshKey }: { refreshKey: number }) {
   return (
     <Panel
       title="Your jobs"
-      subtitle="States are public. Amounts are not — decrypt them below."
+      subtitle="States are public. Amounts are not - decrypt them below."
       actions={
         <button
           type="button"

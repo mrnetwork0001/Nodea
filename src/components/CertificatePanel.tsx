@@ -3,7 +3,7 @@
 /**
  * SLA certificates held by the connected account.
  *
- * Only shows anything if you operate nodes — these are the node's receipts, not the agent's. The
+ * Only shows anything if you operate nodes - these are the node's receipts, not the agent's. The
  * split on each card is the whole idea: the public face is what a future customer needs to trust
  * the operator, and the encrypted manifest underneath is the telemetry that would have exposed a
  * customer's workload if it had been published alongside it.
@@ -139,7 +139,7 @@ function CertificateCard({ certificate }: { certificate: SlaCertificate }) {
 
         {state === "sealed" && (
           <p className="py-1.5 text-center text-xs text-white/25">
-            Sealed to you — only the owning operator can read this manifest.
+            Sealed to you - only the owning operator can read this manifest.
           </p>
         )}
 

@@ -1,9 +1,9 @@
 /**
- * COTI skill 1 — `coti-account-setup`.
+ * COTI skill 1 - `coti-account-setup`.
  *
  * Every participant in Nodea (agent, node operator, treasury) needs two keys, not one: the
  * secp256k1 key that signs transactions, and a 128-bit AES key that COTI's MPC network uses to
- * seal values *for that account*. The AES key is not chosen locally — it is derived through the
+ * seal values *for that account*. The AES key is not chosen locally - it is derived through the
  * on-chain `AccountOnboard` contract, which returns two RSA-encrypted shares that the client
  * XORs back together. Without it an account can submit transactions but cannot read a single
  * one of its own encrypted balances.
@@ -67,7 +67,7 @@ export class NotFundedError extends Error {
  * Derive (or recover) the account's AES key, so it can seal inputs and read its own ciphertexts.
  *
  * Idempotent and cheap to call: if the signer already carries a key this returns immediately.
- * Otherwise it runs COTI's onboarding round-trip, which costs gas — hence the balance check,
+ * Otherwise it runs COTI's onboarding round-trip, which costs gas - hence the balance check,
  * which turns an opaque revert into an actionable message.
  */
 export async function ensureOnboarded(
@@ -104,7 +104,7 @@ export function isOnboarded(signer: CotiSigner): boolean {
  * expensive. The key is scoped per address and per chain: a key derived on testnet is worthless
  * on mainnet, and silently reusing one across accounts would produce ciphertext nobody can read.
  *
- * This is deliberately `localStorage` and nothing more — the key never leaves the browser and is
+ * This is deliberately `localStorage` and nothing more - the key never leaves the browser and is
  * never sent to a Nodea server, because there isn't one.
  */
 export const aesKeyStore = {
@@ -124,7 +124,7 @@ export const aesKeyStore = {
     try {
       window.localStorage.setItem(this.storageKey(address, chainId), aesKey)
     } catch {
-      /* private browsing or blocked storage — the key is re-derivable, so this is not fatal */
+      /* private browsing or blocked storage - the key is re-derivable, so this is not fatal */
     }
   },
   clear(address: string, chainId: number): void {

@@ -1,13 +1,13 @@
 /**
- * Nodea — Autonomous Encrypted DeAI Compute on COTI.
+ * Nodea - Autonomous Encrypted DeAI Compute on COTI.
  *
  * One import surface over the five COTI privacy skills that make private agentic compute work:
  *
- *  - `account`   — `coti-account-setup`: wallets and AES key derivation for garbled circuits
- *  - `messaging` — `coti-private-messaging`: E2EE prompt delivery to a specific compute node
- *  - `credits`   — `coti-private-erc20`: encrypted micro-settlement with no balance leakage
- *  - `sla`       — `coti-private-nft`: confidential ERC-721 execution receipts
- *  - `compute`   — `coti-smart-contracts`: the garbled-circuit escrow and SLA arbiter
+ *  - `account`   - `coti-account-setup`: wallets and AES key derivation for garbled circuits
+ *  - `messaging` - `coti-private-messaging`: E2EE prompt delivery to a specific compute node
+ *  - `credits`   - `coti-private-erc20`: encrypted micro-settlement with no balance leakage
+ *  - `sla`       - `coti-private-nft`: confidential ERC-721 execution receipts
+ *  - `compute`   - `coti-smart-contracts`: the garbled-circuit escrow and SLA arbiter
  */
 export * from "./config"
 export * from "./types"

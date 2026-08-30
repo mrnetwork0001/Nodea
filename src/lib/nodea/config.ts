@@ -1,7 +1,7 @@
 /**
  * Network and protocol constants for Nodea.
  *
- * Nodea runs natively on COTI v2 — the privacy layer is the chain, not a sidecar — so there is
+ * Nodea runs natively on COTI v2 - the privacy layer is the chain, not a sidecar - so there is
  * no "mock" or "local" mode here. The MPC precompile that backs every garbled-circuit operation
  * only exists on COTI, and a Hardhat node would silently produce meaningless ciphertext.
  */
@@ -15,7 +15,7 @@ export interface NodeaNetwork {
   chainId: number
   rpcUrl: string
   explorerUrl: string
-  /** COTI's AccountOnboard contract — the source of a user's AES key shares. */
+  /** COTI's AccountOnboard contract - the source of a user's AES key shares. */
   onboardContract: string
   nativeCurrency: { name: string; symbol: string; decimals: number }
   /** True where gas has real value, so scripts can warn before spending it. */
@@ -45,7 +45,7 @@ export const NETWORKS: Record<NodeaNetworkKey, NodeaNetwork> = {
     onboardContract: ONBOARD_CONTRACT_ADDRESS,
     nativeCurrency: { name: "COTI", symbol: "COTI", decimals: 18 },
     isMainnet: true,
-    fundingHint: "send COTI to this address — mainnet gas has real value and there is no faucet",
+    fundingHint: "send COTI to this address - mainnet gas has real value and there is no faucet",
   },
 }
 
@@ -53,7 +53,7 @@ export const NETWORKS: Record<NodeaNetworkKey, NodeaNetwork> = {
  * Nodea targets COTI mainnet.
  *
  * `AccountOnboard` lives at the same address on both networks, so the only things that differ are
- * the chain id, the RPC and the explorer — and the fact that gas here is real. Override with
+ * the chain id, the RPC and the explorer - and the fact that gas here is real. Override with
  * `NODEA_NETWORK=cotiTestnet` (scripts) or `NEXT_PUBLIC_NODEA_NETWORK=cotiTestnet` (dashboard).
  */
 export const DEFAULT_NETWORK: NodeaNetworkKey = resolveNetwork()

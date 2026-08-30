@@ -4,7 +4,7 @@
  * Data hooks for the dashboard.
  *
  * The split here mirrors the privacy model exactly, and that is the point: anything read through
- * `reader` (a plain RPC provider) is genuinely public — the fleet, job states, certificate
+ * `reader` (a plain RPC provider) is genuinely public - the fleet, job states, certificate
  * metadata. Anything that needs `signer` needs an AES key, because it is a ciphertext addressed to
  * one account. If a value can be fetched without a signer, it was never confidential.
  */
@@ -98,7 +98,7 @@ export function useCertificates(): Resource<SlaCertificate[]> {
 /**
  * The connected account's NDC balance.
  *
- * Needs the signer, and only resolves once the AES key exists — the contract hands back a
+ * Needs the signer, and only resolves once the AES key exists - the contract hands back a
  * ciphertext addressed to this account and the decryption happens in the browser.
  */
 export function useCreditBalance(): Resource<bigint | null> & { claimed: boolean } {

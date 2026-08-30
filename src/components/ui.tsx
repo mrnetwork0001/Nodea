@@ -109,7 +109,7 @@ export function CopyButton({ value }: { value: string }) {
           setCopied(true)
           setTimeout(() => setCopied(false), 1400)
         } catch {
-          /* clipboard blocked — nothing useful to say about it */
+          /* clipboard blocked - nothing useful to say about it */
         }
       }}
       aria-label="Copy"

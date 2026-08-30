@@ -1,11 +1,11 @@
 /**
- * COTI skill 2 — `coti-private-messaging`.
+ * COTI skill 2 - `coti-private-messaging`.
  *
  * A prompt is the most valuable thing an AI agent owns: its system instructions, its retrieved
  * context, its chain of reasoning. Handing that to a GPU marketplace over a transparent chain is
  * simply publishing it, and prompt theft is the cheapest possible attack on an agent business.
  *
- * COTI's `PrivateMessaging` stores each message as a `ctString` in three separately keyed views —
+ * COTI's `PrivateMessaging` stores each message as a `ctString` in three separately keyed views -
  * one under the network key, one under the sender's AES key, one under the recipient's. Only the
  * node that was hired can decrypt the payload it was sent; the chain records that a message
  * happened, never what it said.
@@ -20,7 +20,7 @@ import { MPC_GAS_MESSAGE, mpcGas } from "./gas"
 import { PROMPT_BYTES_PER_CHUNK, PROMPT_MAX_BYTES, PROMPT_MAX_CHUNKS } from "./config"
 import type { CotiSigner, PromptMessage } from "./types"
 
-/** `sendMultipartMessage(address,((uint256[]),bytes[])[])` — the selector every cell is signed under. */
+/** `sendMultipartMessage(address,((uint256[]),bytes[])[])` - the selector every cell is signed under. */
 export const SEND_MULTIPART_SELECTOR = "0xe768797e"
 
 const UTF8 = new TextEncoder()
@@ -42,7 +42,7 @@ export class PromptTooLargeError extends Error {
  * fixed 24-byte stride would cut multi-byte characters in half, and because each chunk is
  * decrypted independently on the way out, the halves would decode to replacement characters
  * instead of the original text. Code-point-aligned chunks are individually valid UTF-8, so the
- * round trip is lossless for any input — emoji and CJK included.
+ * round trip is lossless for any input - emoji and CJK included.
  */
 export function chunkPrompt(prompt: string): string[] {
   const normalized = prompt.replace(/\0/g, "")
@@ -111,7 +111,7 @@ export async function sendPrompt(
  *
  * The contract hands out the copy keyed to `msg.sender` and reverts for anyone who is neither
  * the sender nor the recipient, so this only succeeds for the two parties to the job. Chunks are
- * decrypted individually and concatenated — each one is self-contained valid UTF-8, which is
+ * decrypted individually and concatenated - each one is self-contained valid UTF-8, which is
  * exactly why {@link chunkPrompt} splits on code-point boundaries.
  */
 export async function readPrompt(

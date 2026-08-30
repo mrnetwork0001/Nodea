@@ -3,7 +3,7 @@
 /**
  * Hiring a node, in the three transactions it actually takes.
  *
- * The step list is not decoration — each row is a real transaction with a real explorer link, and
+ * The step list is not decoration - each row is a real transaction with a real explorer link, and
  * showing them separately is the point. A reviewer watching this run can see the prompt get sealed
  * before any money moves, the allowance get set as a ciphertext rather than a number, and the cost
  * get computed inside the circuit from a rate the agent never fetched.
@@ -263,7 +263,7 @@ export function JobComposer({
           <div className="rounded-lg border border-acid/40 bg-acid/10 px-4 py-3">
             <p className="text-xs text-acid">
               Job #{jobId} is escrowed. The node will decrypt the prompt, run it, and submit sealed
-              proof of execution — the circuit decides the payout.
+              proof of execution - the circuit decides the payout.
             </p>
           </div>
         )}
@@ -295,7 +295,7 @@ function describe(cause: unknown): string {
 
     // The one revert worth translating: the circuit found the sealed cost above the sealed budget.
     if (raw.includes("BudgetExceeded")) {
-      return "The node's price for this workload exceeds your sealed budget. The circuit rejected it without revealing either number — raise the budget or pick another node."
+      return "The node's price for this workload exceeds your sealed budget. The circuit rejected it without revealing either number - raise the budget or pick another node."
     }
     return raw
   }

@@ -2,7 +2,7 @@
  * Thin binding helpers shared by every Nodea module.
  *
  * The ABIs are generated from Hardhat artifacts as `as const` literals, which is what gives the
- * app compile-time knowledge of the contract surface — but ethers wants a mutable `InterfaceAbi`,
+ * app compile-time knowledge of the contract surface - but ethers wants a mutable `InterfaceAbi`,
  * so the widening happens here once instead of at twenty call sites.
  */
 import { Contract, type ContractRunner, type InterfaceAbi } from "@coti-io/coti-ethers"

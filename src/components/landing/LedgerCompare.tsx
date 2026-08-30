@@ -1,7 +1,7 @@
 /**
  * The hero visual: the same job, on two different chains.
  *
- * Every abstract sentence about "confidential compute" resolves into this one picture — the left
+ * Every abstract sentence about "confidential compute" resolves into this one picture - the left
  * card is what any block explorer shows today, the right is the same five fields after COTI's MPC
  * layer gets them. The field names match the real storage in `NodeaCompute`, and the ciphertext
  * strings are the shape a `ctUint256` and a `ctString` actually take on chain.

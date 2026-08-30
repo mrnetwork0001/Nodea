@@ -4,12 +4,12 @@
  * Wallet and AES-key session for the dashboard.
  *
  * A COTI session has two distinct steps that most dApps collapse into one, and keeping them
- * separate here is deliberate — it is the clearest way to show what COTI actually adds:
+ * separate here is deliberate - it is the clearest way to show what COTI actually adds:
  *
  *  1. **Connect.** An ordinary EVM connection. From here the app can send transactions.
  *  2. **Onboard.** A paid round-trip through COTI's `AccountOnboard`, which returns two
  *     RSA-encrypted shares that the browser XORs into the account's AES key. Until this happens
- *     the app can move value but cannot *read* a single encrypted balance — every ciphertext on
+ *     the app can move value but cannot *read* a single encrypted balance - every ciphertext on
  *     screen stays a ciphertext.
  *
  * The AES key never leaves the browser. It is cached in `localStorage` keyed by address and chain
@@ -39,7 +39,7 @@ interface WalletState {
   status: WalletStatus
   address: string | null
   signer: JsonRpcSigner | null
-  /** Read-only runner, always available — the fleet is public and should render before connect. */
+  /** Read-only runner, always available - the fleet is public and should render before connect. */
   reader: JsonRpcProvider
   network: NodeaNetwork
   deployment: NodeaDeployment | null
@@ -193,7 +193,7 @@ async function ensureCotiNetwork(ethereum: Eip1193Provider, network: NodeaNetwor
   try {
     await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: chainIdHex }] })
   } catch (cause) {
-    // 4902 is "unrecognised chain" — the only case where adding it is the right response.
+    // 4902 is "unrecognised chain" - the only case where adding it is the right response.
     if ((cause as { code?: number }).code !== 4902) throw cause
 
     await ethereum.request({

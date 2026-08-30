@@ -1,15 +1,15 @@
 /**
- * COTI skill 4 — `coti-private-nft`.
+ * COTI skill 4 - `coti-private-nft`.
  *
  * Private compute has a marketing problem: a provider must prove it is reliable to win the next
  * contract, but publishing that proof on a transparent chain would also publish its customers'
- * inference patterns — which model, how often, how large. The reputation and the confidentiality
+ * inference patterns - which model, how often, how large. The reputation and the confidentiality
  * appear to be in direct conflict.
  *
  * A confidential ERC-721 resolves it. Every settled job mints one certificate to the node
  * operator. Public on the token: which job, which client, what uptime was promised, and whether
  * the garbled circuit found the SLA met. Encrypted in the token URI, readable only by the
- * operator that owns it: the manifest — tokens generated, measured latency, measured uptime, and
+ * operator that owns it: the manifest - tokens generated, measured latency, measured uptime, and
  * the attestation digest. The track record is verifiable; the workload behind it is not exposed.
  *
  * Certificates are soulbound. Reputation that can be sold to another operator is not reputation.
@@ -90,7 +90,7 @@ export async function certificateOfJob(
 /**
  * Decrypt a certificate's manifest.
  *
- * Only succeeds for the operator that owns the token — the URI is stored re-encrypted under the
+ * Only succeeds for the operator that owns the token - the URI is stored re-encrypted under the
  * owner's AES key, so anyone else reads the ciphertext and gets nothing out of it.
  */
 export async function readManifest(

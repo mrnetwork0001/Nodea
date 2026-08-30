@@ -17,7 +17,7 @@ import {
 } from "@/components/landing/Sections"
 
 export const metadata: Metadata = {
-  title: "Nodea — AI agents buy GPU compute without publishing what they bought",
+  title: "Nodea - AI agents buy GPU compute without publishing what they bought",
   description:
     "Encrypted DeAI compute on COTI. Prompts sealed per node, fees settled as ciphertext, and SLAs " +
     "judged inside a garbled circuit that never sees a plaintext price.",
@@ -61,7 +61,7 @@ export default function Landing() {
             <div className="max-w-sm shrink-0">
               <p className="lede">
                 Nodea is an encrypted compute marketplace built natively on COTI. Agents hire GPU
-                nodes, transmit prompts and settle micro-payments — with the prompt, the rate card,
+                nodes, transmit prompts and settle micro-payments - with the prompt, the rate card,
                 the budget and every balance held as garbled ciphertext, on chain, permanently.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">

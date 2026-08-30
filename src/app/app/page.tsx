@@ -38,7 +38,7 @@ export default function Dashboard() {
             <h1 className="display-md">Console</h1>
             <p className="muted mt-3 max-w-lg">
               Hire compute, settle in ciphertext, and decrypt your own values locally. Nothing on
-              this page is read by a server — there isn&apos;t one.
+              this page is read by a server - there isn&apos;t one.
             </p>
           </div>
           <Link

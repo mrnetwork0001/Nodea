@@ -3,7 +3,7 @@
  *
  * Prices are confidential here, so neither the dashboard nor an autonomous agent can rank the
  * fleet by cost. What remains public is the model, the hardware, the SLA a node committed to at
- * registration, and the settled/breached record those commitments produced — and the garbled
+ * registration, and the settled/breached record those commitments produced - and the garbled
  * circuit enforces the buyer's budget against a rate nobody can read.
  *
  * That is a healthier market than a transparent one: an operator's rate cannot be undercut by

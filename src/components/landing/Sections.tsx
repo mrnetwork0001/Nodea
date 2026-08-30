@@ -1,7 +1,7 @@
 /**
  * The landing page's content sections.
  *
- * Server components throughout — the landing reads the same protocol constants the contracts and
+ * Server components throughout - the landing reads the same protocol constants the contracts and
  * SDK use, so a slash rate, a message ceiling or a deployed address can never drift out of sync
  * with what the code actually does.
  */
@@ -69,7 +69,7 @@ const LEAKS = [
   {
     n: "01",
     title: "Prompt theft",
-    body: "System instructions, retrieved context and reasoning traces are the agent's actual product. Sent to a compute marketplace in the clear, they are simply published — and copied by the next agent for free.",
+    body: "System instructions, retrieved context and reasoning traces are the agent's actual product. Sent to a compute marketplace in the clear, they are simply published - and copied by the next agent for free.",
   },
   {
     n: "02",
@@ -97,7 +97,7 @@ export function Problem() {
           <span className="text-acid">your whole business.</span>
         </>
       }
-      lede="Three leaks, all structural, none fixable off-chain — the moment settlement touches a public ledger, the numbers are public."
+      lede="Three leaks, all structural, none fixable off-chain - the moment settlement touches a public ledger, the numbers are public."
     >
       <div className="grid gap-3 md:grid-cols-3">
         {LEAKS.map((leak) => (
@@ -135,12 +135,12 @@ const FLOW = [
   {
     actor: "node",
     call: "submitProof(jobId, enc(tokens), enc(uptime), enc(latency))",
-    note: "The node serves the job on real GPU — 0G Compute today, any provider tomorrow — then reports back. Three conditions judged in-circuit against its public promises. One bit comes out: met, or not.",
+    note: "The node serves the job on real GPU - 0G Compute today, any provider tomorrow - then reports back. Three conditions judged in-circuit against its public promises. One bit comes out: met, or not.",
   },
   {
     actor: "circuit",
     call: "payout = MpcCore.mux(slaMet, cost × 60%, cost)",
-    note: "Selected inside MPC and moved as encrypted transfers. Both legs always run, so a breach and a clean job leave the same footprint — only the sealed amounts differ.",
+    note: "Selected inside MPC and moved as encrypted transfers. Both legs always run, so a breach and a clean job leave the same footprint - only the sealed amounts differ.",
   },
 ] as const
 
@@ -311,7 +311,7 @@ export function Declassified() {
           <p className="muted mt-4">
             This discloses nothing new. The transaction either succeeds or reverts, and an observer
             learns the same bit from the outcome either way. It reveals <em>whether</em> the cost
-            fit — never what either number was.
+            fit - never what either number was.
           </p>
         </article>
 
@@ -323,7 +323,7 @@ export function Declassified() {
           <p className="muted mt-4">
             A genuine disclosure, and a deliberate one: a marketplace where reliability cannot be
             verified is one nobody can safely buy in. The verdict is public, the measurements are
-            not — and the payout is still selected inside the circuit from the encrypted bit.
+            not - and the payout is still selected inside the circuit from the encrypted bit.
           </p>
         </article>
       </div>
@@ -393,7 +393,7 @@ export function Audiences() {
           </p>
           <p className="muted mt-3">
             Bring your own silicon: vLLM, TGI, or a decentralized network like 0G Compute. What COTI
-            protects is the part you cannot get anywhere else — your rate card, your customers&apos;
+            protects is the part you cannot get anywhere else - your rate card, your customers&apos;
             prompts, and the margin between what you charge and what compute cost you.
           </p>
           <pre className="scroll-x mt-6 rounded-xl border border-void-600 bg-void-950 p-4 font-mono text-[11px] text-acid">
@@ -411,17 +411,17 @@ const TOKEN_PHASES = [
   {
     tag: "Now · live",
     title: "A metering unit",
-    body: "Every job on Nodea is priced, escrowed and settled in NDC, with balances and amounts encrypted end to end. Anyone can mint 500 for the price of gas — deliberately, so this deployment can be evaluated without waiting on us to hand out tokens.",
+    body: "Every job on Nodea is priced, escrowed and settled in NDC, with balances and amounts encrypted end to end. Anyone can mint 500 for the price of gas - deliberately, so this deployment can be evaluated without waiting on us to hand out tokens.",
   },
   {
     tag: "After the challenge",
     title: "A real token, same job",
-    body: "We launch a token with liquidity that serves exactly the role NDC serves now. One admin call — setFaucetEnabled(false), already deployed — stops free minting, and supply moves to a fixed cap.",
+    body: "We launch a token with liquidity that serves exactly the role NDC serves now. One admin call - setFaucetEnabled(false), already deployed - stops free minting, and supply moves to a fixed cap.",
   },
   {
     tag: "How it trades",
     title: "Public market, private amounts",
-    body: "A public ERC-20 bridges one-to-one into the private credit through COTI's own PrivacyBridgeERC20 — the pattern already backing PrivacyBridgeUSDCe and WETH. The market is public; the per-job amounts are not.",
+    body: "A public ERC-20 bridges one-to-one into the private credit through COTI's own PrivacyBridgeERC20 - the pattern already backing PrivacyBridgeUSDCe and WETH. The market is public; the per-job amounts are not.",
   },
 ] as const
 
@@ -438,7 +438,7 @@ export function Token() {
           the <span className="text-acid">token</span> after.
         </>
       }
-      lede="Demand is already structural — you cannot hire compute on Nodea without NDC. What is missing is scarcity, and that is a switch we have not yet thrown."
+      lede="Demand is already structural - you cannot hire compute on Nodea without NDC. What is missing is scarcity, and that is a switch we have not yet thrown."
     >
       <div className="grid gap-3 lg:grid-cols-3">
         {TOKEN_PHASES.map((phase) => (
@@ -460,7 +460,7 @@ export function Token() {
           {[
             [
               "Node staking",
-              "A node locks NDC to register and a breach slashes the stake. Today a breaching node forfeits 40% of one job — about 4 NDC. With capital at stake, a public SLA promise costs something to break.",
+              "A node locks NDC to register and a breach slashes the stake. Today a breaching node forfeits 40% of one job - about 4 NDC. With capital at stake, a public SLA promise costs something to break.",
             ],
             [
               "Protocol fee",
@@ -480,7 +480,7 @@ export function Token() {
           ))}
         </ul>
         <p className="muted mt-6 border-t border-void-700 pt-5">
-          Staking and the protocol fee are contract work, not yet deployed — stated as a plan rather
+          Staking and the protocol fee are contract work, not yet deployed - stated as a plan rather
           than dressed up as a product. The full note, including what is live versus planned, is in{" "}
           <code className="font-mono text-acid">docs/TOKENOMICS.md</code>.
         </p>
@@ -494,11 +494,11 @@ export function Token() {
 const FAQ = [
   {
     q: "If the price is encrypted, how does an agent choose a node?",
-    a: "On everything else, which is public: the model, the hardware, the region, the uptime and latency the operator committed to, and the settled-versus-breached record those commitments actually produced. The agent commits a sealed budget ceiling and the garbled circuit enforces it against a rate nobody at the table can read. Nobody can undercut a price they cannot see, so operators compete on reliability instead — which is what the buyer wanted to buy.",
+    a: "On everything else, which is public: the model, the hardware, the region, the uptime and latency the operator committed to, and the settled-versus-breached record those commitments actually produced. The agent commits a sealed budget ceiling and the garbled circuit enforces it against a rate nobody at the table can read. Nobody can undercut a price they cannot see, so operators compete on reliability instead - which is what the buyer wanted to buy.",
   },
   {
     q: "Who can decrypt what?",
-    a: "Each confidential value is sealed once per entitled reader. A node's rate card decrypts only for its operator. A job's cost, payout, refund and workload decrypt for the two counterparties and nobody else — the contract reverts the read for anyone who is not one of them. A prompt decrypts for its sender and the node it was addressed to. An SLA manifest decrypts only for the operator that owns the certificate.",
+    a: "Each confidential value is sealed once per entitled reader. A node's rate card decrypts only for its operator. A job's cost, payout, refund and workload decrypt for the two counterparties and nobody else - the contract reverts the read for anyone who is not one of them. A prompt decrypts for its sender and the node it was addressed to. An SLA manifest decrypts only for the operator that owns the certificate.",
   },
   {
     q: "Does this actually run, or is it a mock?",
@@ -506,11 +506,11 @@ const FAQ = [
   },
   {
     q: "What stops a node from lying about its uptime?",
-    a: "Partly the circuit, partly nothing — and we would rather say so. Three conditions are compared in-circuit against the node's public commitments: uptime, latency, and delivered volume against what the agent ordered. Under-delivery is caught outright. But a node still reports its own uptime, so that figure is an oracle problem rather than a privacy one. TEE attestation binding into the certificate's attestation digest is the natural next layer.",
+    a: "Partly the circuit, partly nothing - and we would rather say so. Three conditions are compared in-circuit against the node's public commitments: uptime, latency, and delivered volume against what the agent ordered. Under-delivery is caught outright. But a node still reports its own uptime, so that figure is an oracle problem rather than a privacy one. TEE attestation binding into the certificate's attestation digest is the natural next layer.",
   },
   {
     q: "Why COTI rather than a rollup with ZK proofs?",
-    a: "Because the computation itself has to happen over data nobody is allowed to see. A ZK proof shows a computation was performed correctly on inputs the prover already knows. Here the contract must multiply a price only the node knows by a workload only the agent knows, compare the product against a budget only the agent knows, and pay out — with no party learning the others' inputs. That is multi-party computation, and COTI's garbled circuits do it natively at the contract level.",
+    a: "Because the computation itself has to happen over data nobody is allowed to see. A ZK proof shows a computation was performed correctly on inputs the prover already knows. Here the contract must multiply a price only the node knows by a workload only the agent knows, compare the product against a budget only the agent knows, and pay out - with no party learning the others' inputs. That is multi-party computation, and COTI's garbled circuits do it natively at the contract level.",
   },
 ] as const
 
@@ -647,7 +647,7 @@ export function LandingFooter() {
       <div className="flex flex-col gap-5 pb-12 sm:flex-row sm:items-center sm:justify-between">
         <p className="muted max-w-md">
           Nodea · Apache-2.0 · built on COTI. A met SLA pays the escrow in full; a breach withholds{" "}
-          {SLA_SLASH_BPS / 100}% and returns it to the agent — both amounts encrypted.
+          {SLA_SLASH_BPS / 100}% and returns it to the agent - both amounts encrypted.
         </p>
         <div className="flex items-center gap-6">
           <a

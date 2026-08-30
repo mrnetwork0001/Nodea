@@ -1,11 +1,11 @@
 /**
- * COTI skill 5 — `coti-smart-contracts` (garbled circuits).
+ * COTI skill 5 - `coti-smart-contracts` (garbled circuits).
  *
  * The client for `NodeaCompute`: the escrow that prices a job, judges an SLA and splits the
  * payment entirely inside COTI's MPC layer.
  *
  * The shape worth noticing in this module is what is *absent*. An agent opening a job never
- * learns the node's price, and never computes the cost — it seals a workload size and a ceiling,
+ * learns the node's price, and never computes the cost - it seals a workload size and a ceiling,
  * and the multiplication and comparison happen in the circuit. A node submitting proof never
  * learns what it will be paid until it decrypts its own copy afterwards. Neither party, and no
  * observer, sees the other's numbers at any point.
@@ -23,7 +23,7 @@ export const REGISTER_NODE_SELECTOR = "0x426116e3"
 export const UPDATE_PRICE_SELECTOR = "0x9cff6a94"
 /** `openJob(uint256,((uint256,uint256),bytes),((uint256,uint256),bytes),uint256,uint64)` */
 export const OPEN_JOB_SELECTOR = "0x9e353d64"
-/** `submitProof(uint256,IT,IT,IT,bytes32,itString)` — all four sealed arguments share this selector. */
+/** `submitProof(uint256,IT,IT,IT,bytes32,itString)` - all four sealed arguments share this selector. */
 export const SUBMIT_PROOF_SELECTOR = "0xf91370d2"
 
 export interface RegisterNodeParams {
@@ -132,7 +132,7 @@ export async function getNode(
   return toListing(nodeId, node)
 }
 
-/** The whole public fleet. Prices are absent by construction — they are not public data. */
+/** The whole public fleet. Prices are absent by construction - they are not public data. */
 export async function listNodes(
   runner: ContractRunner | Provider,
   computeAddress: string,
@@ -181,7 +181,7 @@ export async function readNodePrice(
  * Hire a node and escrow the fee.
  *
  * Requires an encrypted NDC allowance already granted to the escrow, and a prompt already
- * delivered through {@link sendPrompt} — the contract checks on chain that the message came from
+ * delivered through {@link sendPrompt} - the contract checks on chain that the message came from
  * this agent and was addressed to this node, so an escrow cannot be attached to a prompt the node
  * was never given.
  */
@@ -319,7 +319,7 @@ export async function jobsOfNode(
  *
  * The contract hands back the copy re-encrypted for whichever counterparty is asking and reverts
  * for everyone else, so this returns the agent's view or the operator's view depending on who is
- * signing. Fields absent from the result are simply not populated yet — payout and refund do not
+ * signing. Fields absent from the result are simply not populated yet - payout and refund do not
  * exist until settlement.
  */
 export async function readJobAmounts(

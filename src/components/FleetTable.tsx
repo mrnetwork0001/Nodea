@@ -6,7 +6,7 @@
  * Notice the column that is missing. On every other compute marketplace the price is the first
  * thing you sort by; here it does not exist as public data at all, and the "Rate card" column
  * says so explicitly rather than leaving a blank. An agent chooses on model, hardware, region and
- * the settled/breached record — and the garbled circuit enforces its budget against a number
+ * the settled/breached record - and the garbled circuit enforces its budget against a number
  * nobody at this table can read.
  */
 import { Cpu, Lock, RefreshCw } from "lucide-react"

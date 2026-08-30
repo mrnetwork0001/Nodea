@@ -4,7 +4,7 @@
  * Session state: connection, AES key, and NDC balance.
  *
  * The balance row is the clearest single demonstration in the app. Before onboarding it reads
- * "sealed" — not because the app is being coy, but because the contract genuinely returns a
+ * "sealed" - not because the app is being coy, but because the contract genuinely returns a
  * ciphertext this browser has no key for. After onboarding, the same call returns the same bytes
  * and they resolve to a number. Nothing about the chain changed; the reader did.
  */
