@@ -1,0 +1,12 @@
+{
+  "network": "cotiMainnet",
+  "chainId": 2632500,
+  "deployedAt": null,
+  "deployer": null,
+  "contracts": {
+    "NodeaCredits": null,
+    "NodeaSLA": null,
+    "NodeaPromptChannel": null,
+    "NodeaCompute": null
+  }
+}
