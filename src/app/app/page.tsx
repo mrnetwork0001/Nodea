@@ -1,7 +1,5 @@
 "use client"
 
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
 import { useState } from "react"
 import { CertificatePanel } from "@/components/CertificatePanel"
 import { FleetTable } from "@/components/FleetTable"
@@ -29,20 +27,13 @@ export default function Dashboard() {
 
       <main className="shell py-8">
         <div className="mb-6 border-b border-void-600 pb-6 lg:mb-7 lg:pb-7">
-          <div className="flex items-center justify-between gap-4">
-            <p className="eyebrow flex items-center gap-3">
-              <span className="text-acid">00</span>
-              <span className="h-px w-8 bg-void-500" />
-              {network.name}
-            </p>
-            <Link
-              href="/"
-              className="inline-flex shrink-0 items-center gap-2 font-mono text-[10px] uppercase tracking-label text-white/45 transition-colors hover:text-acid"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back
-            </Link>
-          </div>
+          {/* No back link here: the wordmark already routes home, and a second control for the
+              same destination was only competing with it. */}
+          <p className="eyebrow flex items-center gap-3">
+            <span className="text-acid">00</span>
+            <span className="h-px w-8 bg-void-500" />
+            {network.name}
+          </p>
           <h1 className="display-md mt-4">Console</h1>
           <p className="muted mt-3 max-w-lg">
             Hire compute, settle in ciphertext, and decrypt your own values locally. Nothing on this
