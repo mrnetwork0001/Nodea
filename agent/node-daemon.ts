@@ -93,10 +93,28 @@ async function serve(
     orderedKTokens,
     degrade,
   })
+  if (result.zeroG) {
+    console.log(`     0G       ${result.zeroG.model} via ${short(result.zeroG.provider)}`)
+    console.log(
+      `              ${result.zeroG.completionTokens} tokens billed, signature ` +
+        `${result.zeroG.verified === null ? "n/a (not a verifiable service)" : result.zeroG.verified ? "valid" : "INVALID"}`,
+    )
+  }
   console.log(
     `     served   ${result.deliveredKTokens}k tokens, ${result.latencyMs}ms TTFT, ` +
-      `${result.uptimeBps / 100}% uptime`,
+      `${result.uptimeBps / 100}% uptime  [${result.backend}]`,
   )
+
+  // Delivered volume is compared in-circuit against what the agent ordered, and a real model stops
+  // when it is done rather than filling the budget. Say so plainly here: a shortfall is a genuine
+  // breach under the contract's rules, not a bug, and the operator should see it coming rather
+  // than discover it in the settlement.
+  if (result.deliveredKTokens < orderedKTokens) {
+    console.log(
+      `     ! short   delivered ${result.deliveredKTokens}k against ${orderedKTokens}k ordered — ` +
+        `the circuit will record an SLA breach and slash this payout.`,
+    )
+  }
 
   // 4. Attest and settle. The digest binds the receipt to this exact completion, so the
   //    certificate is evidence of *this* run rather than a generic claim of uptime.

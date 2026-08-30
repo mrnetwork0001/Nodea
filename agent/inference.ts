@@ -1,16 +1,30 @@
 /**
  * The compute side of a Nodea node: decrypt the prompt, run inference, measure yourself.
  *
- * Nodea is infrastructure, not a model host — what a node actually runs is its own business, and
- * `runInference` is the seam where a real operator drops in vLLM, TGI, an 0G/io.net worker, or an
- * OpenAI-compatible endpoint. Set `NODEA_INFERENCE_URL` and the daemon will call it; leave it
- * unset and the daemon runs the deterministic local stand-in below, so the whole demo works
- * offline with no API keys.
+ * Nodea is a settlement and privacy layer, not a model host, so what a node actually runs is its
+ * own business. Three backends, chosen by configuration:
  *
- * The important property either way is that the plaintext prompt exists only here, in the node's
- * own process, after it decrypts a message that was sealed for its AES key alone.
+ *   0G Compute   `ZEROG_PRIVATE_KEY` set — real decentralized GPU inference, metered on 0G
+ *   HTTP         `NODEA_INFERENCE_URL` set — any OpenAI-compatible endpoint (vLLM, TGI, hosted)
+ *   local        neither — a deterministic stand-in, so the demo runs offline with no keys
+ *
+ * 0G is the interesting one, because it makes the architecture literal rather than illustrative:
+ * the agent pays the node in encrypted NDC on COTI, and the node redeems that into real GPU time
+ * on 0G. Neither the agent nor an observer learns what the node paid, so the node's margin stays
+ * as confidential as the prompt did. On a transparent chain both legs would be visible and the
+ * margin trivially computable.
+ *
+ * The property all three share is that the plaintext prompt exists only here, in the node's own
+ * process, after it decrypts a message sealed for its AES key alone.
  */
 import { createHash } from "crypto"
+import {
+  connectZeroG,
+  isZeroGConfigured,
+  runZeroGInference,
+  selectService,
+  type ZeroGCompletion,
+} from "./zerog"
 
 export interface InferenceResult {
   completion: string
@@ -20,6 +34,10 @@ export interface InferenceResult {
   latencyMs: number
   /** Measured uptime over the job window, in basis points. */
   uptimeBps: number
+  /** Which backend produced this, for the daemon's log and the operator's own records. */
+  backend: "0g" | "http" | "local"
+  /** Present only for 0G: the provider, model, and whether its TEE signature verified. */
+  zeroG?: Pick<ZeroGCompletion, "provider" | "model" | "verified" | "completionTokens">
 }
 
 export interface InferenceOptions {
@@ -36,6 +54,8 @@ export async function runInference(
   prompt: string,
   options: InferenceOptions,
 ): Promise<InferenceResult> {
+  if (isZeroGConfigured()) return runOnZeroG(prompt, options)
+
   const endpoint = process.env.NODEA_INFERENCE_URL
   const started = Date.now()
 
@@ -52,6 +72,53 @@ export async function runInference(
     deliveredKTokens: options.degrade ? options.orderedKTokens / 2n : options.orderedKTokens,
     latencyMs,
     uptimeBps: options.degrade ? 8_500 : 9_970,
+    backend: endpoint ? "http" : "local",
+  }
+}
+
+/**
+ * Serve the job from 0G Compute.
+ *
+ * The token budget is derived from what the agent ordered: a job priced for N thousand tokens asks
+ * the provider for at most that many, so the node cannot overspend on GPU relative to what it was
+ * paid — the one place where the COTI-side economics have to reach into the 0G-side request.
+ *
+ * Delivered volume is what 0G actually billed, rounded down to whole thousands, because that is
+ * the unit `NodeaCompute` compares in-circuit against the order. Rounding down is deliberate: it
+ * can only ever understate the node's own delivery, so a rounding artefact costs the node rather
+ * than shorting the agent.
+ */
+async function runOnZeroG(prompt: string, options: InferenceOptions): Promise<InferenceResult> {
+  const { broker } = await connectZeroG()
+  const service = await selectService(broker, options.model)
+
+  const maxTokens = Number(options.orderedKTokens) * 1000
+  const started = Date.now()
+  const result = await runZeroGInference(
+    broker,
+    service,
+    prompt,
+    // A degraded node deliberately under-delivers, so the circuit has something to catch.
+    options.degrade ? Math.max(1, Math.floor(maxTokens / 2)) : maxTokens,
+  )
+  const latencyMs = Date.now() - started
+
+  const deliveredKTokens = BigInt(Math.floor(result.completionTokens / 1000))
+
+  return {
+    completion: result.content,
+    deliveredKTokens,
+    latencyMs,
+    // Real measurement is the point of using 0G at all, so uptime is the only figure still
+    // self-reported here — see the oracle caveat in docs/PRIVACY.md.
+    uptimeBps: options.degrade ? 8_500 : 9_970,
+    backend: "0g",
+    zeroG: {
+      provider: result.provider,
+      model: result.model,
+      verified: result.verified,
+      completionTokens: result.completionTokens,
+    },
   }
 }
 
