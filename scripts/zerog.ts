@@ -12,6 +12,7 @@ import * as dotenv from "dotenv"
 import {
   chatServices,
   connectZeroG,
+  MIN_LEDGER_0G,
   formatOG,
   isZeroGConfigured,
   ledgerBalance,
@@ -64,7 +65,10 @@ async function status(broker: Awaited<ReturnType<typeof connectZeroG>>["broker"]
   const ledger = await ledgerBalance(broker)
 
   if (!ledger) {
-    console.log(`  ledger    none yet — run \`npx tsx scripts/zerog.ts fund 0.1\` to create one\n`)
+    console.log(
+      `  ledger    none yet — needs at least ${MIN_LEDGER_0G} 0G to open:\n` +
+        `            npm run zerog -- fund ${MIN_LEDGER_0G}\n`,
+    )
   } else {
     console.log(`  ledger    ${formatOG(ledger.total)} 0G total, ${formatOG(ledger.locked)} available\n`)
   }
@@ -113,6 +117,19 @@ async function fund(
   const existing = await ledgerBalance(broker)
 
   if (!existing) {
+    // 0G rejects an under-funded ledger outright. Catching it here costs nothing and turns a raw
+    // SDK error into something that names the number and the shortfall.
+    if (amount < MIN_LEDGER_0G) {
+      console.log(
+        `  0G requires at least ${MIN_LEDGER_0G} 0G to open a ledger, and ${amount} was requested.\n\n` +
+          `  Top up the operator's 0G wallet to at least ${MIN_LEDGER_0G} (plus gas), then:\n` +
+          `    npm run zerog -- fund ${MIN_LEDGER_0G}\n\n` +
+          `  Until then the node daemon falls back to its local stand-in, which needs no 0G at all.`,
+      )
+      process.exitCode = 1
+      return
+    }
+
     console.log(`  creating ledger with ${amount} 0G…`)
     await broker.ledger.addLedger(amount)
   } else {

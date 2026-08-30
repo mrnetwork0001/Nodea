@@ -88,6 +88,12 @@ export class ZeroGLedgerError extends Error {
   }
 }
 
+/**
+ * 0G's own floor for opening a ledger. Enforced by the network, not by us — a smaller deposit is
+ * rejected outright rather than partially accepted, so it is worth checking before spending gas.
+ */
+export const MIN_LEDGER_0G = 3
+
 export function zeroGNetwork(): ZeroGNetwork {
   return process.env.ZEROG_NETWORK === "testnet" ? ZEROG_NETWORKS.testnet : ZEROG_NETWORKS.mainnet
 }
