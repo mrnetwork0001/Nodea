@@ -5,9 +5,14 @@
  * the whole amount and this splits it. The deployer keeps a reserve for the deployment itself;
  * whatever is left is divided between the two demo identities.
  *
- *   npm run fund              distribute using the default targets
- *   npm run fund -- --dry     show the plan without sending
+ *   npm run fund                          distribute using the default targets
+ *   npm run fund -- --dry                 show the plan without sending
  *   npm run fund -- --operator 0.8 --agent 0.6
+ *   npm run fund -- --to 0xABC… 0.3       send to one address, e.g. a browser agent
+ *
+ * The `--to` form exists because the console can mint an agent identity that has no funds and no
+ * wallet behind it. Its address is on screen; this sends it gas without needing MetaMask to hold
+ * COTI at all.
  *
  * Native transfers only. This moves gas, not NDC — NDC is minted by the credits contract and is
  * encrypted end to end.
@@ -53,6 +58,34 @@ async function main() {
   console.log(`    deployer  ${deployer.address}  ${ethers.formatEther(balances.deployer)} COTI`)
   console.log(`    operator  ${operator.address}  ${ethers.formatEther(balances.operator)} COTI`)
   console.log(`    agent     ${agent.address}  ${ethers.formatEther(balances.agent)} COTI\n`)
+
+  // One-off transfer takes precedence over the three-way split.
+  if (options.to) {
+    if (balances.deployer < options.to.amount) {
+      throw new Error(
+        `deployer holds ${ethers.formatEther(balances.deployer)} COTI, ` +
+          `less than the ${ethers.formatEther(options.to.amount)} requested`,
+      )
+    }
+
+    console.log(`    -> ${options.to.address}  ${ethers.formatEther(options.to.amount)} COTI`)
+
+    if (options.dryRun) {
+      console.log(`\n  --dry: nothing sent.\n`)
+      return
+    }
+
+    const receipt = await (
+      await deployer.sendTransaction({ to: options.to.address, value: options.to.amount })
+    ).wait()
+
+    console.log(`    ${network.explorerUrl}/tx/${receipt!.hash}`)
+    console.log(
+      `\n  recipient now holds ` +
+        `${ethers.formatEther(await provider.getBalance(options.to.address))} COTI\n`,
+    )
+    return
+  }
 
   if (balances.deployer === 0n) {
     console.log(
@@ -132,6 +165,8 @@ interface FundOptions {
   operator: bigint
   agent: bigint
   dryRun: boolean
+  /** One-off recipient, bypassing the default split. */
+  to?: { address: string; amount: bigint }
 }
 
 function parseArgs(argv: string[]): FundOptions {
@@ -139,6 +174,15 @@ function parseArgs(argv: string[]): FundOptions {
 
   for (let i = 0; i < argv.length; i++) {
     switch (argv[i]) {
+      case "--to": {
+        const address = argv[++i]
+        const amount = argv[++i]
+        if (!ethers.isAddress(address)) {
+          throw new Error(`--to expects an address, got "${address}"`)
+        }
+        options.to = { address: ethers.getAddress(address), amount: ethers.parseEther(amount ?? "0.3") }
+        break
+      }
       case "--operator":
         options.operator = ethers.parseEther(argv[++i])
         break

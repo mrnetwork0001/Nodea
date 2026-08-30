@@ -105,6 +105,16 @@ To work for free instead, set `NODEA_NETWORK=cotiTestnet` in `.env`, fund the
 addresses from the [COTI faucet](https://faucet.coti.io), and use
 `npm run deploy:testnet`.
 
+### Funding a browser agent
+
+The console can mint an agent identity that signs locally, so hiring costs no wallet approvals.
+It needs COTI for gas before it can onboard. Its address is on screen; send from any wallet, or
+from the deployer:
+
+```bash
+npm run fund -- --to 0xYourAgentAddress 0.3
+```
+
 ### See it work
 
 ```bash

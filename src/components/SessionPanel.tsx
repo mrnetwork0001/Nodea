@@ -356,10 +356,31 @@ function AgentIdentity() {
       </div>
 
       {!funded && (
-        <p className="mt-2 text-[10px] leading-relaxed text-white/30">
-          The agent needs COTI for gas before it can onboard. Fund it from your wallet - the only
-          wallet prompt agent mode needs - or send COTI to the address above from anywhere.
-        </p>
+        <div className="mt-3 space-y-2 border-t border-acid/20 pt-3">
+          <p className="text-[10px] leading-relaxed text-white/40">
+            The agent needs COTI for gas before it can onboard. Three ways to get it there:
+          </p>
+          <ol className="space-y-1.5 text-[10px] leading-relaxed text-white/30">
+            <li>
+              <span className="text-white/50">1.</span> The button above, if your wallet holds COTI
+              on {network.name} - the only wallet prompt agent mode needs.
+            </li>
+            <li>
+              <span className="text-white/50">2.</span> Send COTI to the address above from any
+              wallet or exchange withdrawal.
+            </li>
+            <li>
+              <span className="text-white/50">3.</span> From the repo, using the deployer key:
+              <code className="mt-1 block break-all font-mono text-acid">
+                npm run fund -- --to {agent.address} 0.3
+              </code>
+            </li>
+          </ol>
+          <p className="text-[10px] leading-relaxed text-white/25">
+            Must be native COTI on chain {network.chainId} - the COTI ERC-20 on Ethereum will not
+            arrive here.
+          </p>
+        </div>
       )}
     </div>
   )
