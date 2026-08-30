@@ -190,7 +190,8 @@ async function router(command: string) {
     console.log(`  ${models.length} models available:\n`)
     for (const model of models.slice(0, 12)) {
       console.log(
-        `    ${model.id.padEnd(34)} ${model.contextLength ? `ctx ${model.contextLength.toLocaleString()}` : ""}`,
+        `    ${model.id.padEnd(30)} ${model.formats.join("/").padEnd(18)}` +
+          `${model.contextLength ? `ctx ${model.contextLength.toLocaleString()}` : ""}`,
       )
     }
     if (models.length > 12) console.log(`    …and ${models.length - 12} more`)
@@ -207,13 +208,14 @@ async function router(command: string) {
 
   if (command === "test") {
     const model = resolveRouterModel(process.env.ZEROG_MODEL ?? "llama", models)
+    const formats = models.find((entry) => entry.id === model)?.formats ?? ["openai"]
     const prompt = "In one sentence: why does an AI agent need transaction privacy?"
 
     console.log(`  model   ${model}`)
     console.log(`  prompt  "${prompt}"\n`)
 
     const started = Date.now()
-    const result = await runRouterInference(prompt, model, 200)
+    const result = await runRouterInference(prompt, model, 200, formats)
 
     console.log(`  answer  ${result.content.trim()}\n`)
     console.log(`  tokens  ${result.promptTokens} in / ${result.completionTokens} out`)

@@ -127,6 +127,8 @@ async function serve(
     job.client,
     job.id,
     result.completion,
+    // What actually served it. A fact about this answer, sealed with it - not a marketplace claim.
+    { backend: result.backend, model: result.zeroG?.model ?? node.modelId },
   )
   console.log(
     `     returned ${result.completion.length} chars in ${returned.parts} sealed ` +

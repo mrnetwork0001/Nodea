@@ -117,8 +117,14 @@ async function main() {
   if (result) {
     header("The answer")
     console.log(result.text.trim())
+    if (result.provenance) {
+      console.log(
+        `\n  served by ${result.provenance.model} on ${result.provenance.backend}` +
+          ` - attested by the node inside the sealed payload`,
+      )
+    }
     console.log(
-      `\n  decrypted from ${result.complete ? "" : "an incomplete set of "}sealed messages -` +
+      `  decrypted from ${result.complete ? "" : "an incomplete set of "}sealed messages -` +
         ` readable by this agent alone.`,
     )
   }

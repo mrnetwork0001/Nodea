@@ -165,21 +165,46 @@ export async function readPrompt(
 /**
  * Envelope for an inference result travelling back to the agent.
  *
- * `NODEA1|<jobId>|<part>|<parts>|<text>` — a pipe-delimited header rather than JSON, because every
- * byte spent on framing is a byte of answer that does not fit in a 1,536-byte message.
+ * `NODEA2|<jobId>|<part>|<parts>|<backend>|<model>|<text>` - pipe-delimited rather than JSON,
+ * because every byte spent on framing is a byte of answer that does not fit in a 1,536-byte
+ * message.
+ *
+ * The provenance fields carry what actually served the job. They belong here rather than in the
+ * public node listing: which backend a node uses is the operator's own business and can change
+ * between jobs, so it is a fact about *this* answer, attested by the node that produced it, not a
+ * marketplace-level claim. It also rides inside the sealed payload, so only the agent that paid
+ * for the job learns where its work ran.
+ *
+ * `NODEA1` is still parsed on read. Jobs settled before provenance existed should not become
+ * unreadable because the format moved on.
  */
-const RESULT_PREFIX = "NODEA1"
+const RESULT_PREFIX = "NODEA2"
+const LEGACY_PREFIX = "NODEA1"
+
+export interface ResultProvenance {
+  /** Which backend served it: `0g-router`, `0g`, `http`, or `local`. */
+  backend: string
+  /** The model that actually answered, which may differ from the node's advertised id. */
+  model: string
+}
 
 export interface JobResult {
   jobId: number
   text: string
   /** True when every part of a multi-part result was found and reassembled. */
   complete: boolean
+  /** Absent for results sealed before provenance was carried. */
+  provenance?: ResultProvenance
+}
+
+/** Provenance fields must not contain the delimiter, or reassembly misparses. */
+function sanitize(value: string): string {
+  return value.replace(/\|/g, "-").slice(0, 48)
 }
 
 /** Bytes of actual completion that fit in one message after the envelope header. */
-function resultCapacity(jobId: number, parts: number): number {
-  const header = `${RESULT_PREFIX}|${jobId}|${parts}|${parts}|`
+function resultCapacity(jobId: number, parts: number, provenance: ResultProvenance): number {
+  const header = `${RESULT_PREFIX}|${jobId}|${parts}|${parts}|${sanitize(provenance.backend)}|${sanitize(provenance.model)}|`
   return PROMPT_MAX_BYTES - UTF8.encode(header).length
 }
 
@@ -199,9 +224,13 @@ export async function sendResult(
   client: string,
   jobId: number,
   text: string,
+  provenance: ResultProvenance,
 ): Promise<{ messageIds: number[]; parts: number }> {
+  const backend = sanitize(provenance.backend)
+  const model = sanitize(provenance.model)
+
   const bytes = UTF8.encode(text)
-  const perPart = resultCapacity(jobId, 1)
+  const perPart = resultCapacity(jobId, 1, provenance)
   const parts = Math.max(1, Math.ceil(bytes.length / perPart))
 
   const messageIds: number[] = []
@@ -210,7 +239,9 @@ export async function sendResult(
     // Slice on code points, not bytes: a part split mid-character would decode to replacement
     // characters once the agent reassembles it.
     const slice = sliceByBytes(text, index * perPart, perPart)
-    const envelope = `${RESULT_PREFIX}|${jobId}|${index}|${parts}|${slice}`
+    // Provenance repeats on every part rather than riding only on the first: a few dozen bytes
+    // buys reassembly that does not depend on which part happens to arrive.
+    const envelope = `${RESULT_PREFIX}|${jobId}|${index}|${parts}|${backend}|${model}|${slice}`
 
     const sent = await sendPrompt(signer, channelAddress, client, envelope)
     messageIds.push(sent.messageId)
@@ -255,6 +286,7 @@ export async function readResult(
 
   const found = new Map<number, string>()
   let expected: number | null = null
+  let provenance: ResultProvenance | undefined
 
   for (const id of ids) {
     let decrypted: string
@@ -264,14 +296,23 @@ export async function readResult(
       continue // not ours to read, or not a text payload
     }
 
-    if (!decrypted.startsWith(`${RESULT_PREFIX}|`)) continue
+    const versioned = decrypted.startsWith(`${RESULT_PREFIX}|`)
+    const legacy = decrypted.startsWith(`${LEGACY_PREFIX}|`)
+    if (!versioned && !legacy) continue
 
-    const [, job, part, parts, ...rest] = decrypted.split("|")
+    const fields = decrypted.split("|")
+    const [, job, part, parts] = fields
     if (Number(job) !== jobId) continue
 
     expected = Number(parts)
-    // The body may itself contain a pipe, so rejoin everything after the header.
-    found.set(Number(part), rest.join("|"))
+
+    if (versioned) {
+      provenance = { backend: fields[4] ?? "", model: fields[5] ?? "" }
+      // The body may itself contain a pipe, so rejoin everything after the header.
+      found.set(Number(part), fields.slice(6).join("|"))
+    } else {
+      found.set(Number(part), fields.slice(4).join("|"))
+    }
 
     if (found.size === expected) break
   }
@@ -283,6 +324,7 @@ export async function readResult(
     jobId,
     text: ordered.map((part) => part ?? "").join(""),
     complete: ordered.every((part) => part !== undefined),
+    provenance,
   }
 }
 

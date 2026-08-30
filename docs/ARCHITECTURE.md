@@ -164,6 +164,17 @@ margin Nodea keeps confidential.
 Hardware class, region and SLA promises are derived from where a model sits in the price range, so
 a frontier model is not paired with a latency claim it could not meet.
 
+## Where a job ran
+
+The result envelope carries the backend and the model that actually served it. That belongs in the
+sealed payload rather than in the public node listing, and the distinction is worth stating: which
+backend a node uses is the operator's own business and can change between jobs, so it is a fact
+about *that answer*, attested by the node that produced it, not a marketplace-level claim. It also
+means only the agent that paid for the job learns where its work ran.
+
+The envelope is versioned (`NODEA2`) and the previous format is still parsed on read - jobs settled
+before provenance existed should not become unreadable because the format moved on.
+
 ## Runtimes
 
 **`agent/run.ts`** — surveys the public fleet, ranks it on reliability evidence (it cannot see
@@ -176,6 +187,13 @@ in-circuit slashing is visible end to end.
 
 `agent/inference.ts` is the seam where a real operator plugs in vLLM, TGI, or any
 OpenAI-compatible endpoint via `NODEA_INFERENCE_URL`.
+
+Not every model on the 0G Router speaks OpenAI: four of its chat models are Anthropic-only and
+reject `/v1/chat/completions` outright. The catalog declares this in `supported_formats`, so the
+Router client reads it and speaks whichever wire format the model accepts - `max_tokens` required
+rather than optional, a content-block array rather than a choices array, different usage field
+names. Reading the catalog is what keeps the strongest models in the fleet instead of quietly
+dropping them.
 
 ## Gas on COTI
 

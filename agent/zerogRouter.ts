@@ -25,6 +25,15 @@ export interface RouterModel {
   id: string
   name?: string
   contextLength?: number
+  /**
+   * Wire formats the Router accepts for this model.
+   *
+   * Not every model speaks OpenAI. Four of the catalog's chat models - the Claude family - are
+   * Anthropic-only and reject `/v1/chat/completions` outright with a message naming the format
+   * they do accept. Reading this off the catalog is what keeps the best models in the fleet
+   * instead of quietly dropping them.
+   */
+  formats: string[]
 }
 
 export interface RouterCompletion {
@@ -53,13 +62,19 @@ export async function listRouterModels(): Promise<RouterModel[]> {
   }
 
   const body = (await response.json()) as {
-    data?: Array<{ id: string; name?: string; context_length?: number }>
+    data?: Array<{
+      id: string
+      name?: string
+      context_length?: number
+      supported_formats?: string[]
+    }>
   }
 
   return (body.data ?? []).map((model) => ({
     id: model.id,
     name: model.name,
     contextLength: model.context_length,
+    formats: model.supported_formats ?? ["openai"],
   }))
 }
 
@@ -88,23 +103,42 @@ export function resolveRouterModel(advertised: string, available: readonly Route
   )
 }
 
-/** Run one completion through the Router, billed against the node operator's unified balance. */
+/**
+ * Run one completion through the Router, billed against the node operator's unified balance.
+ *
+ * Speaks whichever wire format the model actually accepts. Anthropic's differs from OpenAI's in
+ * both directions - `max_tokens` is required rather than optional, the answer arrives as a content
+ * block array rather than a choices array, and usage is named differently - so the two paths are
+ * kept explicit rather than papered over with optional chaining.
+ */
 export async function runRouterInference(
   prompt: string,
   model: string,
   maxTokens?: number,
+  formats: readonly string[] = ["openai"],
 ): Promise<RouterCompletion> {
   const key = process.env.ZEROG_ROUTER_KEY
   if (!key) throw new Error("ZEROG_ROUTER_KEY is not set")
 
-  const response = await fetch(`${routerBaseUrl()}/chat/completions`, {
+  const anthropic = !formats.includes("openai") && formats.includes("anthropic")
+
+  const response = await fetch(`${routerBaseUrl()}${anthropic ? "/messages" : "/chat/completions"}`, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "user", content: prompt }],
-      ...(maxTokens ? { max_tokens: maxTokens } : {}),
-    }),
+    body: JSON.stringify(
+      anthropic
+        ? {
+            model,
+            // Required by the Anthropic format, unlike OpenAI's where it is optional.
+            max_tokens: maxTokens ?? 1_024,
+            messages: [{ role: "user", content: prompt }],
+          }
+        : {
+            model,
+            messages: [{ role: "user", content: prompt }],
+            ...(maxTokens ? { max_tokens: maxTokens } : {}),
+          },
+    ),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   })
 
@@ -123,14 +157,29 @@ export async function runRouterInference(
 
   const body = (await response.json()) as {
     model?: string
+    // OpenAI shape
     choices?: Array<{ message?: { content?: string } }>
-    usage?: { prompt_tokens?: number; completion_tokens?: number }
+    usage?: {
+      prompt_tokens?: number
+      completion_tokens?: number
+      input_tokens?: number
+      output_tokens?: number
+    }
+    // Anthropic shape
+    content?: Array<{ type?: string; text?: string }>
   }
 
+  const content = anthropic
+    ? (body.content ?? [])
+        .filter((block) => block.type === "text" || block.text)
+        .map((block) => block.text ?? "")
+        .join("")
+    : (body.choices?.[0]?.message?.content ?? "")
+
   return {
-    content: body.choices?.[0]?.message?.content ?? "",
+    content,
     model: body.model ?? model,
-    promptTokens: body.usage?.prompt_tokens ?? 0,
-    completionTokens: body.usage?.completion_tokens ?? 0,
+    promptTokens: body.usage?.prompt_tokens ?? body.usage?.input_tokens ?? 0,
+    completionTokens: body.usage?.completion_tokens ?? body.usage?.output_tokens ?? 0,
   }
 }

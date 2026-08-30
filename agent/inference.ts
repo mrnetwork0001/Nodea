@@ -111,7 +111,9 @@ export async function runInference(
  * unit floored a good 120-token answer to zero and slashed a node that had done the work.
  */
 async function runOnRouter(prompt: string, options: InferenceOptions): Promise<InferenceResult> {
-  const model = resolveRouterModel(options.model, await listRouterModels())
+  const catalog = await listRouterModels()
+  const model = resolveRouterModel(options.model, catalog)
+  const formats = catalog.find((entry) => entry.id === model)?.formats ?? ["openai"]
 
   const started = Date.now()
   const result = await runRouterInference(
@@ -121,6 +123,7 @@ async function runOnRouter(prompt: string, options: InferenceOptions): Promise<I
     options.degrade
       ? Math.max(1, Math.floor(Number(options.orderedTokens) / 2))
       : outputCeiling(options.orderedTokens),
+    formats,
   )
   const latencyMs = Date.now() - started
 

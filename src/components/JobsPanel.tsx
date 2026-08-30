@@ -191,6 +191,7 @@ function JobResult({ jobId }: { jobId: number }) {
   const [state, setState] = useState<"idle" | "loading" | "done" | "none">("idle")
   const [text, setText] = useState<string | null>(null)
   const [partial, setPartial] = useState(false)
+  const [provenance, setProvenance] = useState<{ backend: string; model: string } | null>(null)
 
   const load = async () => {
     if (!signer || !deployment) return
@@ -203,6 +204,7 @@ function JobResult({ jobId }: { jobId: number }) {
       }
       setText(result.text)
       setPartial(!result.complete)
+      setProvenance(result.provenance ?? null)
       setState("done")
     } catch {
       setState("none")
@@ -242,9 +244,18 @@ function JobResult({ jobId }: { jobId: number }) {
       {state === "done" && (
         <>
           <p className="mt-2 whitespace-pre-wrap text-[13px] leading-relaxed text-white">{text}</p>
+
+          {provenance && (
+            <p className="mt-3 border-t border-acid/20 pt-2 font-mono text-[10px] text-white/40">
+              served by <span className="text-acid">{provenance.model}</span> on{" "}
+              <span className="text-acid">{provenance.backend}</span>
+            </p>
+          )}
+
           <p className="mt-2 text-[10px] text-white/30">
             {partial ? "Some parts are still arriving. " : ""}
-            Decrypted in this browser - the node sealed it for this agent alone.
+            Decrypted in this browser - the node sealed the answer, and where it ran, for this
+            agent alone.
           </p>
         </>
       )}
