@@ -54,9 +54,11 @@ interface StepState {
   note?: string
 }
 
-const DEFAULT_PROMPT =
-  "SYSTEM: You are a private research agent. Summarise counterparty risk in the attached " +
-  "lending position and propose a hedge. Do not disclose the position."
+/**
+ * Kept deliberately short. Every 8 bytes is one wallet signature in a browser, so a paragraph-long
+ * default would open the demo with twenty popups. The CLI agent has no such limit.
+ */
+const DEFAULT_PROMPT = "Rank ETH/USDC pools by 24h fee yield net of gas."
 
 export function JobComposer({
   node,
@@ -78,9 +80,15 @@ export function JobComposer({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [jobId, setJobId] = useState<number | null>(null)
+  const [sealing, setSealing] = useState<{ done: number; total: number } | null>(null)
 
   const promptBytes = useMemo(() => messaging.promptByteLength(prompt), [prompt])
   const oversized = promptBytes > PROMPT_MAX_BYTES
+
+  // COTI seals a string one 8-byte cell at a time and each cell carries its own signature, so a
+  // browser wallet prompts once per cell. Two more for the sealed workload and budget, one for the
+  // encrypted allowance. Stated up front, because twenty unexplained popups read as a hung page.
+  const signatures = useMemo(() => messaging.promptSignatureCount(prompt) + 3, [prompt])
 
   const ready = status === "ready" && signer && deployment && node && !oversized
   const disabledReason = !node
@@ -109,7 +117,15 @@ export function JobComposer({
       if (ceiling <= 0n) throw new Error("Budget must be greater than zero.")
 
       mark("prompt", { status: "running" })
-      const sealed = await messaging.sendPrompt(signer, deployment.promptChannel, node.operator, prompt)
+      setSealing({ done: 0, total: messaging.promptSignatureCount(prompt) })
+      const sealed = await messaging.sendPrompt(
+        signer,
+        deployment.promptChannel,
+        node.operator,
+        prompt,
+        (done, total) => setSealing({ done, total }),
+      )
+      setSealing(null)
       mark("prompt", {
         status: "done",
         txHash: sealed.txHash,
@@ -142,6 +158,7 @@ export function JobComposer({
       setJobId(job.jobId)
       onJobOpened()
     } catch (cause) {
+      setSealing(null)
       setError(describe(cause))
       setSteps((current) => {
         const next = { ...current }
@@ -245,6 +262,12 @@ export function JobComposer({
                     <code className="text-[10px] text-acid/70">{step.skill}</code>
                   </div>
                   <p className="mt-0.5 text-[11px] leading-relaxed text-white/40">{step.detail}</p>
+                  {step.key === "prompt" && sealing && state.status === "running" && (
+                    <p className="mt-1.5 font-mono text-[11px] text-acid">
+                      approve {sealing.done + 1} of {sealing.total} in your wallet - one per 8-byte
+                      cell
+                    </p>
+                  )}
                   {state.note && (
                     <p className="mt-1 flex items-center gap-2 font-mono text-[11px] text-acid">
                       {state.note}
@@ -268,6 +291,18 @@ export function JobComposer({
           </div>
         )}
 
+        <div className="rounded-xl border border-void-600 bg-void-950 px-4 py-3">
+          <p className="muted">
+            <strong className="font-semibold text-white">
+              ~{signatures} wallet approvals, then 3 transactions.
+            </strong>{" "}
+            COTI signs each 8-byte cell of the prompt separately, so a browser wallet asks once per
+            cell. Shorten the prompt to reduce it - or run{" "}
+            <code className="font-mono text-acid">npm run agent</code>, which holds a key and signs
+            locally with no popups at all.
+          </p>
+        </div>
+
         <button
           type="button"
           className="btn-lg btn-acid w-full"
@@ -276,7 +311,11 @@ export function JobComposer({
           title={disabledReason ?? undefined}
         >
           {busy ? <Spinner /> : <Send className="h-4 w-4" />}
-          {busy ? "Sealing and escrowing…" : "Hire node"}
+          {busy
+            ? sealing
+              ? `Sealing prompt ${sealing.done}/${sealing.total}…`
+              : "Escrowing…"
+            : "Hire node"}
           {!busy && <ArrowRight className="h-4 w-4" />}
         </button>
 

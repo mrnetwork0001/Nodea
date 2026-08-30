@@ -150,6 +150,23 @@ ethers uses the estimate as the limit with no buffer, so the transaction ran out
 the fee for nothing. Every MPC-touching call therefore carries a generous fixed `gasLimit`. Unused
 gas is refunded, and COTI's block limit is 120,000,000, so over-setting costs nothing.
 
+## One wallet signature per 8 bytes
+
+COTI seals a string one 8-byte cell at a time, and every cell carries its own input-text signature
+over `(signer, contract, selector, ciphertext)`. A private key signs those locally and silently,
+which is why the agent runtime and every script run without interaction.
+
+A browser wallet cannot. `JsonRpcSigner` routes each cell through `personal_sign`, so **sealing an
+N-byte prompt costs `ceil(N/8)` MetaMask popups** — a 153-byte prompt is twenty, plus one for the
+encrypted allowance and two for the sealed workload and budget.
+
+There is no batching to reach for; the signatures are per-ciphertext by construction. So the
+dashboard states the count before the user commits, counts down while it runs, and defaults to a
+short prompt. Long workloads belong in the agent runtime, which holds a key and signs locally.
+
+This is the sharpest difference between the two signer paths, and it is worth knowing before
+designing any browser flow that seals a string on COTI.
+
 ## Reading empty ciphertext
 
 An account that has never held credits has all-zero ciphertext in storage. Decrypting that does

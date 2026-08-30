@@ -17,7 +17,12 @@ import type { ContractRunner, Provider } from "@coti-io/coti-ethers"
 import type { itString } from "@coti-io/coti-sdk-typescript"
 import { normalizeCtString, promptChannelContract, requireEvent } from "./contracts"
 import { MPC_GAS_MESSAGE, mpcGas } from "./gas"
-import { PROMPT_BYTES_PER_CHUNK, PROMPT_MAX_BYTES, PROMPT_MAX_CHUNKS } from "./config"
+import {
+  PROMPT_BYTES_PER_CELL,
+  PROMPT_BYTES_PER_CHUNK,
+  PROMPT_MAX_BYTES,
+  PROMPT_MAX_CHUNKS,
+} from "./config"
 import type { CotiSigner, PromptMessage } from "./types"
 
 /** `sendMultipartMessage(address,((uint256[]),bytes[])[])` - the selector every cell is signed under. */
@@ -75,6 +80,22 @@ export function promptByteLength(prompt: string): number {
 }
 
 /**
+ * How many wallet signatures sealing this prompt will cost in a browser.
+ *
+ * COTI seals a string one 8-byte cell at a time, and each cell carries its own input-text
+ * signature over `(signer, contract, selector, ciphertext)`. A private key signs those locally and
+ * silently, which is why the agent runtime shows no prompts at all. A browser wallet cannot: every
+ * cell is a separate `personal_sign`, so a 160-byte prompt is twenty MetaMask popups.
+ *
+ * There is no batching to reach for — the signatures are per-ciphertext by construction. The only
+ * honest response is to tell the user the number before they start and count down as it goes, so
+ * a long sequence reads as progress rather than as a hung page.
+ */
+export function promptSignatureCount(prompt: string): number {
+  return Math.ceil(promptByteLength(prompt) / PROMPT_BYTES_PER_CELL)
+}
+
+/**
  * Seal a prompt for one specific node and post it on chain.
  *
  * Every cell is individually encrypted under the sender's AES key and signed over
@@ -88,14 +109,21 @@ export async function sendPrompt(
   channelAddress: string,
   nodeOperator: string,
   prompt: string,
+  /** Called after each chunk is sealed, so a UI can count down the wallet popups. */
+  onProgress?: (sealedCells: number, totalCells: number) => void,
 ): Promise<{ messageId: number; txHash: string; chunks: number }> {
   const chunks = chunkPrompt(prompt)
+  const totalCells = promptSignatureCount(prompt)
 
   const encryptedChunks: itString[] = []
+  let sealedCells = 0
+
   for (const chunk of chunks) {
     encryptedChunks.push(
       (await signer.encryptValue(chunk, channelAddress, SEND_MULTIPART_SELECTOR)) as itString,
     )
+    sealedCells = Math.min(totalCells, sealedCells + Math.ceil(UTF8.encode(chunk).length / 8) || 1)
+    onProgress?.(sealedCells, totalCells)
   }
 
   const channel = promptChannelContract(channelAddress, signer as unknown as ContractRunner)

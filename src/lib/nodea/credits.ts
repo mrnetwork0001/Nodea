@@ -93,7 +93,12 @@ export async function approveSpender(
 ): Promise<{ txHash: string }> {
   const credits = creditsContract(creditsAddress, signer as unknown as ContractRunner)
 
-  await (await credits["approve(address,uint256)"](spender, 0n, mpcGas())).wait()
+  // The reset is only required when an allowance is actually outstanding. Sending it
+  // unconditionally cost a transaction — and, in a browser, another wallet popup — on the common
+  // path where there is nothing to reset.
+  if ((await allowanceOf(signer, creditsAddress, spender)) > 0n) {
+    await (await credits["approve(address,uint256)"](spender, 0n, mpcGas())).wait()
+  }
 
   const encrypted = (await signer.encryptValue256(
     amount,
