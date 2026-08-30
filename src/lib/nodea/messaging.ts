@@ -16,6 +16,7 @@
 import type { ContractRunner, Provider } from "@coti-io/coti-ethers"
 import type { itString } from "@coti-io/coti-sdk-typescript"
 import { normalizeCtString, promptChannelContract, requireEvent } from "./contracts"
+import { MPC_GAS_MESSAGE, mpcGas } from "./gas"
 import { PROMPT_BYTES_PER_CHUNK, PROMPT_MAX_BYTES, PROMPT_MAX_CHUNKS } from "./config"
 import type { CotiSigner, PromptMessage } from "./types"
 
@@ -98,7 +99,7 @@ export async function sendPrompt(
   }
 
   const channel = promptChannelContract(channelAddress, signer as unknown as ContractRunner)
-  const tx = await channel.sendMultipartMessage(nodeOperator, encryptedChunks)
+  const tx = await channel.sendMultipartMessage(nodeOperator, encryptedChunks, mpcGas(MPC_GAS_MESSAGE))
   const receipt = await tx.wait()
 
   const messageId = Number(requireEvent(channel, receipt, "MessageSent").messageId)

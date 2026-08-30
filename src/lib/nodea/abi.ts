@@ -2063,12 +2063,12 @@ export const NodeaSLAAbi = [
       {
         "components": [
           {
-            "internalType": "ctUint64[]",
+            "internalType": "gtUint64[]",
             "name": "value",
             "type": "uint256[]"
           }
         ],
-        "internalType": "struct ctString",
+        "internalType": "struct gtString",
         "name": "manifest",
         "type": "tuple"
       }

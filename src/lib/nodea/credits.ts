@@ -15,8 +15,9 @@
  * path ever sees the number.
  */
 import type { ContractRunner, Provider } from "@coti-io/coti-ethers"
-import type { itUint256 } from "@coti-io/coti-sdk-typescript"
+import { isZeroCtUint256, type itUint256 } from "@coti-io/coti-sdk-typescript"
 import { creditsContract, normalizeCtUint256 } from "./contracts"
+import { mpcGas } from "./gas"
 import type { CotiSigner } from "./types"
 
 /** `approve(address,((uint256,uint256),bytes))` */
@@ -27,8 +28,11 @@ export const TRANSFER_SELECTOR = "0x83ae57f4"
 /**
  * Decrypt the caller's own NDC balance.
  *
- * Returns `0n` for an account that has never held credits: COTI treats an all-zero ciphertext as
- * canonical empty storage and short-circuits it, so a fresh wallet reads zero rather than failing.
+ * An account that has never held credits has all-zero ciphertext in storage, and decrypting that
+ * does **not** yield zero — it yields a garbage 70-digit number, because there is no plaintext
+ * behind it to recover. (`decryptUint` short-circuits the zero case; `decryptUint256` does not.)
+ * Checking for canonical empty storage first is what makes a fresh wallet read `0` instead of
+ * nonsense, which is exactly what an operator sees before its first job settles.
  */
 export async function balanceOf(
   signer: CotiSigner,
@@ -37,9 +41,11 @@ export async function balanceOf(
 ): Promise<bigint> {
   const credits = creditsContract(creditsAddress, signer as unknown as ContractRunner)
   const owner = account ?? (await signer.getAddress())
-  const ciphertext = await credits.balanceOf(owner)
+  const ciphertext = normalizeCtUint256(await credits["balanceOf(address)"](owner))
 
-  return signer.decryptValue256(normalizeCtUint256(ciphertext))
+  if (isZeroCtUint256(ciphertext)) return 0n
+
+  return signer.decryptValue256(ciphertext)
 }
 
 /** Claim the one-shot open allotment so a fresh agent can hire compute immediately. */
@@ -55,7 +61,7 @@ export async function claimFaucet(
   }
 
   const amount: bigint = await credits.FAUCET_AMOUNT()
-  const receipt = await (await credits.claimFaucet()).wait()
+  const receipt = await (await credits.claimFaucet(mpcGas())).wait()
 
   return { txHash: receipt.hash, amount }
 }
@@ -87,7 +93,7 @@ export async function approveSpender(
 ): Promise<{ txHash: string }> {
   const credits = creditsContract(creditsAddress, signer as unknown as ContractRunner)
 
-  await (await credits["approve(address,uint256)"](spender, 0n)).wait()
+  await (await credits["approve(address,uint256)"](spender, 0n, mpcGas())).wait()
 
   const encrypted = (await signer.encryptValue256(
     amount,
@@ -95,7 +101,7 @@ export async function approveSpender(
     APPROVE_SELECTOR,
   )) as itUint256
   const receipt = await (
-    await credits["approve(address,((uint256,uint256),bytes))"](spender, encrypted)
+    await credits["approve(address,((uint256,uint256),bytes))"](spender, encrypted, mpcGas())
   ).wait()
 
   return { txHash: receipt.hash }
@@ -116,7 +122,7 @@ export async function transferCredits(
   )) as itUint256
 
   const receipt = await (
-    await credits["transfer(address,((uint256,uint256),bytes))"](to, encrypted)
+    await credits["transfer(address,((uint256,uint256),bytes))"](to, encrypted, mpcGas())
   ).wait()
 
   return { txHash: receipt.hash }
@@ -130,7 +136,10 @@ export async function allowanceOf(
 ): Promise<bigint> {
   const credits = creditsContract(creditsAddress, signer as unknown as ContractRunner)
   const owner = await signer.getAddress()
-  const allowance = await credits.allowance(owner, spender)
+  const allowance = await credits["allowance(address,address)"](owner, spender)
+  const ciphertext = normalizeCtUint256(allowance.ownerCiphertext ?? allowance[1])
 
-  return signer.decryptValue256(normalizeCtUint256(allowance.ownerCiphertext ?? allowance[1]))
+  if (isZeroCtUint256(ciphertext)) return 0n
+
+  return signer.decryptValue256(ciphertext)
 }

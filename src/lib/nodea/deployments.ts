@@ -18,7 +18,24 @@ export interface NodeaDeployment {
   deployer: string | null
 }
 
-const RECORDS: Record<NodeaNetworkKey, typeof cotiTestnet> = {
+/**
+ * Shape of a deployment record. Declared explicitly rather than inferred from the JSON, because
+ * an undeployed network's file is all nulls and TypeScript would narrow every address to `null`.
+ */
+interface DeploymentRecord {
+  network: string
+  chainId: number
+  deployedAt: string | null
+  deployer: string | null
+  contracts: {
+    NodeaCredits: string | null
+    NodeaSLA: string | null
+    NodeaPromptChannel: string | null
+    NodeaCompute: string | null
+  }
+}
+
+const RECORDS: Record<NodeaNetworkKey, DeploymentRecord> = {
   cotiTestnet,
   cotiMainnet,
 }

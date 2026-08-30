@@ -1,12 +1,12 @@
 {
   "network": "cotiMainnet",
   "chainId": 2632500,
-  "deployedAt": null,
-  "deployer": null,
+  "deployedAt": "2026-08-30T16:40:57.725Z",
+  "deployer": "0x721077088a2f12b25Ff13f1477C2d7E96B6d8292",
   "contracts": {
-    "NodeaCredits": null,
-    "NodeaSLA": null,
-    "NodeaPromptChannel": null,
-    "NodeaCompute": null
+    "NodeaCredits": "0x4d61f8BB478e257E241E47A45A8F46B4a47f1876",
+    "NodeaSLA": "0xDfBd2961aAF90650fE3eF36c6fDB33Ce6bdc28c4",
+    "NodeaPromptChannel": "0xDe0f81161C2E54df2Ce627333153ae43eFA89C0b",
+    "NodeaCompute": "0xD057081D016766D55BeA5bD25c8ca1C7865EfC1d"
   }
 }

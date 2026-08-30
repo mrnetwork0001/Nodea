@@ -184,8 +184,17 @@ to them, and that a third party gets a revert.
 RPC, the explorer — and the fact that mainnet gas is real. Select with `NODEA_NETWORK` (scripts) or
 `NEXT_PUBLIC_NODEA_NETWORK` (dashboard).
 
-Deployed addresses are recorded in [`deployments/`](deployments/) and read by both the dashboard
-and the agent runtime.
+### Live on COTI mainnet
+
+| Contract | Address |
+| --- | --- |
+| NodeaCompute | [`0xD057081D016766D55BeA5bD25c8ca1C7865EfC1d`](https://mainnet.cotiscan.io/address/0xD057081D016766D55BeA5bD25c8ca1C7865EfC1d) |
+| NodeaCredits | [`0x4d61f8BB478e257E241E47A45A8F46B4a47f1876`](https://mainnet.cotiscan.io/address/0x4d61f8BB478e257E241E47A45A8F46B4a47f1876) |
+| NodeaSLA | [`0xDfBd2961aAF90650fE3eF36c6fDB33Ce6bdc28c4`](https://mainnet.cotiscan.io/address/0xDfBd2961aAF90650fE3eF36c6fDB33Ce6bdc28c4) |
+| NodeaPromptChannel | [`0xDe0f81161C2E54df2Ce627333153ae43eFA89C0b`](https://mainnet.cotiscan.io/address/0xDe0f81161C2E54df2Ce627333153ae43eFA89C0b) |
+
+Addresses are recorded in [`deployments/`](deployments/) and read by both the dashboard and the
+agent runtime.
 
 ## Licence
 

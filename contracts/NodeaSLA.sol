@@ -81,13 +81,23 @@ contract NodeaSLA is PrivateERC721URIStorage {
     /**
      * @notice Mint a confidential SLA certificate for a settled job.
      * @param to               The GPU node operator receiving the receipt.
-     * @param manifest         Network-key ciphertext of the JSON manifest, produced by the
-     *                         escrow's garbled circuit. It is re-onboarded here and re-encrypted
-     *                         under `to`'s AES key, so only the operator can read it back.
-     * @dev Takes a `ctString` rather than an `itString` on purpose: the manifest is not raw user
-     *      input, it is the *output* of the escrow's MPC settlement. Forwarding an `itString`
-     *      between contracts would fail input-text validation anyway, since the IT signature is
-     *      bound to the original (signer, contract, selector) triple.
+     * @param manifest         Garbled handle to the JSON manifest, validated by the escrow and
+     *                         handed across still in circuit. It is re-encrypted here under `to`'s
+     *                         AES key, so only the operator can read it back.
+     *
+     * @dev Takes a `gtString` rather than an `itString` or a `ctString`, and both alternatives are
+     *      ruled out rather than merely unattractive:
+     *
+     *      - An `itString` cannot be forwarded between contracts at all. Its signature is bound to
+     *        the original (signer, contract, selector) triple, so re-submitting it here fails
+     *        validation on every count.
+     *      - A `ctString` sealed with `MpcCore.offBoard` is scoped to the contract that produced
+     *        it. Re-onboarding one in a different contract reverts — measured on COTI mainnet with
+     *        `contracts/probe/MpcHopProbe.sol`, which also confirmed that garbled *handles* cross
+     *        a contract boundary without trouble.
+     *
+     *      So the manifest stays in circuit for the hop and is only sealed once it reaches the key
+     *      it is meant for. That is also cheaper: it removes an offboard per 8-byte cell.
      */
     function issue(
         address to,
@@ -96,7 +106,7 @@ contract NodeaSLA is PrivateERC721URIStorage {
         uint32 promisedUptimeBps,
         bytes32 attestationDigest,
         bool slaMet,
-        ctString calldata manifest
+        gtString memory manifest
     ) external returns (uint256 tokenId) {
         if (!isIssuer[msg.sender]) revert NotIssuer(msg.sender);
         if (certificateOfJob[jobId] != 0) revert CertificateAlreadyIssued(jobId);
@@ -105,7 +115,7 @@ contract NodeaSLA is PrivateERC721URIStorage {
         tokenId = ++_nextTokenId;
 
         _mint(to, tokenId);
-        _setTokenURI(to, tokenId, _toMemory(manifest));
+        _setTokenURI(to, tokenId, manifest);
 
         certificates[tokenId] = Certificate({
             jobId: jobId,
@@ -140,13 +150,5 @@ contract NodeaSLA is PrivateERC721URIStorage {
         if (previousOwner != address(0) && to != address(0)) revert Soulbound();
 
         return super._update(to, tokenId, auth);
-    }
-
-    function _toMemory(ctString calldata ct) private pure returns (ctString memory out) {
-        uint256 len = ct.value.length;
-        out.value = new ctUint64[](len);
-        for (uint256 i = 0; i < len; i++) {
-            out.value[i] = ct.value[i];
-        }
     }
 }

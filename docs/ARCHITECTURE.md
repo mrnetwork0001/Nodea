@@ -70,11 +70,27 @@ without ever wrapping it back into an input text — no plaintext round trip.
 Extends COTI `PrivateERC721URIStorage`. Soulbound: `_update` reverts on any transfer between two
 non-zero addresses, because reputation that can be sold is not reputation.
 
-`issue()` takes a `ctString`, not an `itString`, and that is not an arbitrary choice. A COTI input
-text is signed over `(signer, contract, selector, ciphertext)`, so forwarding one from
-`NodeaCompute` to `NodeaSLA` would fail validation on all three counts. Instead the escrow
-validates the manifest itself, `offBoard`s it to a network-key ciphertext, and passes that — which
-`NodeaSLA` re-onboards and re-keys for the receiving operator.
+`issue()` takes a `gtString` — a garbled *handle*, still in circuit — and both alternatives are
+ruled out by measurement rather than taste:
+
+- An `itString` cannot be forwarded between contracts. Its signature is bound to the original
+  `(signer, contract, selector)` triple, so re-submitting it in `NodeaSLA` fails on all three.
+- A `ctString` sealed with `MpcCore.offBoard` is **scoped to the contract that produced it**.
+  Re-onboarding one elsewhere reverts.
+
+That second point cost a mainnet deployment to discover. `contracts/probe/MpcHopProbe.sol` is the
+diagnostic that settled it, and its result is worth stating plainly because it is not in COTI's
+documentation:
+
+| Hop across a contract boundary | Result |
+| --- | --- |
+| `gtUint256` garbled handle | works |
+| `gtString` garbled handle | works |
+| `ctString` from `MpcCore.offBoard` | **reverts** |
+
+So garbled handles travel and sealed ciphertext does not. The manifest stays in circuit for the
+hop and is sealed only once it reaches the key it is meant for — which is also cheaper, saving an
+offboard per 8-byte cell.
 
 ### `NodeaPromptChannel` — E2EE transport
 
@@ -121,6 +137,25 @@ in-circuit slashing is visible end to end.
 
 `agent/inference.ts` is the seam where a real operator plugs in vLLM, TGI, or any
 OpenAI-compatible endpoint via `NODEA_INFERENCE_URL`.
+
+## Gas on COTI
+
+`eth_estimateGas` is not reliable for MPC code, and `src/lib/nodea/gas.ts` exists because of it.
+During estimation the precompile short-circuits — `decrypt` always returns `1`, so any branch
+gated on a decrypted value takes the cheap path — and real execution then follows a more
+expensive one.
+
+Measured on mainnet: `claimFaucet` estimated at 624,754 and used 679,471. Only 9% short, but
+ethers uses the estimate as the limit with no buffer, so the transaction ran out of gas and burned
+the fee for nothing. Every MPC-touching call therefore carries a generous fixed `gasLimit`. Unused
+gas is refunded, and COTI's block limit is 120,000,000, so over-setting costs nothing.
+
+## Reading empty ciphertext
+
+An account that has never held credits has all-zero ciphertext in storage. Decrypting that does
+**not** yield zero — `decryptUint256` has no short-circuit for it and returns a garbage 70-digit
+number. Every read of a possibly-unset sealed value checks `isZeroCtUint256` first, which is what
+makes a fresh operator's balance render as `0` rather than nonsense.
 
 ## Build notes
 

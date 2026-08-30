@@ -19,7 +19,7 @@ interface INodeaSLA {
         uint32 promisedUptimeBps,
         bytes32 attestationDigest,
         bool slaMet,
-        ctString calldata manifest
+        gtString memory manifest
     ) external returns (uint256 tokenId);
 }
 

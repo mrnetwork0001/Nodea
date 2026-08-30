@@ -12,7 +12,9 @@
  */
 import type { ContractRunner, Provider } from "@coti-io/coti-ethers"
 import type { itString, itUint256 } from "@coti-io/coti-sdk-typescript"
+import { isZeroCtUint256 } from "@coti-io/coti-sdk-typescript"
 import { computeContract, normalizeCtUint256, requireEvent } from "./contracts"
+import { mpcGas, MPC_GAS_HEAVY } from "./gas"
 import { JOB_STATES, type CotiSigner, type JobRecord, type NodeListing, type SealedAmounts } from "./types"
 
 /** `registerNode(string,string,string,uint32,uint32,((uint256,uint256),bytes))` */
@@ -86,6 +88,7 @@ export async function registerNode(
       params.promisedUptimeBps,
       params.promisedLatencyMs,
       encryptedPrice,
+      mpcGas(),
     )
   ).wait()
 
@@ -105,7 +108,7 @@ export async function updateNodePrice(
     UPDATE_PRICE_SELECTOR,
   )) as itUint256
 
-  const receipt = await (await compute.updateNodePrice(nodeId, encrypted)).wait()
+  const receipt = await (await compute.updateNodePrice(nodeId, encrypted, mpcGas())).wait()
   return { txHash: receipt.hash }
 }
 
@@ -116,7 +119,7 @@ export async function setNodeActive(
   active: boolean,
 ): Promise<{ txHash: string }> {
   const compute = computeContract(computeAddress, signer as unknown as ContractRunner)
-  const receipt = await (await compute.setNodeActive(nodeId, active)).wait()
+  const receipt = await (await compute.setNodeActive(nodeId, active, mpcGas())).wait()
   return { txHash: receipt.hash }
 }
 
@@ -163,7 +166,11 @@ export async function readNodePrice(
   nodeId: number,
 ): Promise<bigint> {
   const compute = computeContract(computeAddress, signer as unknown as ContractRunner)
-  return signer.decryptValue256(normalizeCtUint256(await compute.nodePriceForOperator(nodeId)))
+  const ciphertext = normalizeCtUint256(await compute.nodePriceForOperator(nodeId))
+
+  if (isZeroCtUint256(ciphertext)) return 0n
+
+  return signer.decryptValue256(ciphertext)
 }
 
 // ---------------------------------------------------------------------------
@@ -203,6 +210,7 @@ export async function openJob(
       encryptedBudget,
       params.promptMessageId,
       params.deadline,
+      mpcGas(MPC_GAS_HEAVY),
     )
   ).wait()
 
@@ -252,6 +260,7 @@ export async function submitProof(
       encryptedLatency,
       params.attestationDigest,
       encryptedManifest,
+      mpcGas(MPC_GAS_HEAVY),
     )
   ).wait()
 
@@ -269,7 +278,7 @@ export async function reclaimExpiredJob(
   jobId: number,
 ): Promise<{ txHash: string }> {
   const compute = computeContract(computeAddress, signer as unknown as ContractRunner)
-  const receipt = await (await compute.reclaimExpiredJob(jobId)).wait()
+  const receipt = await (await compute.reclaimExpiredJob(jobId, mpcGas())).wait()
   return { txHash: receipt.hash }
 }
 
@@ -322,7 +331,13 @@ export async function readJobAmounts(
 
   const decryptOrSkip = async (call: () => Promise<unknown>): Promise<bigint | undefined> => {
     try {
-      return await signer.decryptValue256(normalizeCtUint256(await call()))
+      const ciphertext = normalizeCtUint256(await call())
+
+      // Canonical empty storage. Decrypting it would return a garbage 70-digit number rather
+      // than zero, so a value that does not exist yet must be reported as absent, not as noise.
+      if (isZeroCtUint256(ciphertext)) return undefined
+
+      return await signer.decryptValue256(ciphertext)
     } catch {
       // Not yet written (pre-settlement) or not addressed to this caller.
       return undefined

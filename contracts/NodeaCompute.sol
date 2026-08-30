@@ -471,7 +471,7 @@ contract NodeaCompute is ReentrancyGuard {
         credits.transferGT(job.client, gtRefund);
     }
 
-    /// @dev Re-key the node's manifest for the certificate contract and mint the receipt.
+    /// @dev Validate the node's manifest and hand it to the certificate contract still in circuit.
     function _issueCertificate(
         uint256 jobId,
         bytes32 attestationDigest,
@@ -488,7 +488,7 @@ contract NodeaCompute is ReentrancyGuard {
                 _nodes[job.nodeId].promisedUptimeBps,
                 attestationDigest,
                 slaMet,
-                MpcCore.offBoard(MpcCore.validateCiphertext(encManifest))
+                MpcCore.validateCiphertext(encManifest)
             );
     }
 
