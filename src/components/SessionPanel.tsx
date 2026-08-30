@@ -15,6 +15,7 @@ import { formatCredits } from "@/lib/nodea/config"
 import * as credits from "@/lib/nodea/credits"
 import { useCreditBalance } from "@/lib/useNodea"
 import { useWallet, type SignerMode } from "@/lib/wallet"
+import { ConfirmDialog } from "./ConfirmDialog"
 import { Address, CopyButton, ErrorNote, Panel, Spinner } from "./ui"
 
 /** Enough to onboard, claim credits and run several jobs. */
@@ -228,6 +229,7 @@ function AgentIdentity() {
   const [importing, setImporting] = useState(false)
   const [importValue, setImportValue] = useState("")
   const [funding, setFunding] = useState(false)
+  const [forgetting, setForgetting] = useState(false)
 
   if (!agent) {
     return (
@@ -314,19 +316,34 @@ function AgentIdentity() {
         <button
           type="button"
           className="shrink-0 font-mono text-[10px] uppercase tracking-label text-white/30 hover:text-alert"
-          onClick={() => {
-            if (
-              window.confirm(
-                "Forget this agent key? Any COTI or NDC it holds becomes unreachable unless you have exported the key.",
-              )
-            ) {
-              forgetAgentIdentity()
-            }
-          }}
+          onClick={() => setForgetting(true)}
         >
           forget
         </button>
       </div>
+
+      <ConfirmDialog
+        open={forgetting}
+        tone="danger"
+        title="Forget this agent?"
+        body={
+          <>
+            <p>
+              The key is deleted from this browser. Any COTI or NDC this agent holds becomes
+              unreachable unless you have already backed the key up.
+            </p>
+            <p className="font-mono text-[11px] text-white/60">
+              {ethers.formatEther(agentBalance ?? 0n)} COTI held
+            </p>
+          </>
+        }
+        confirmLabel="Forget key"
+        onCancel={() => setForgetting(false)}
+        onConfirm={() => {
+          setForgetting(false)
+          forgetAgentIdentity()
+        }}
+      />
 
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-acid/20 pt-3">
         <span className="font-mono text-[11px] text-white/45">
@@ -401,6 +418,7 @@ function AgentIdentity() {
  */
 function BackupKey({ privateKey }: { privateKey: string }) {
   const [revealed, setRevealed] = useState(false)
+  const [asking, setAsking] = useState(false)
 
   return (
     <div className="mt-3 border-t border-acid/20 pt-3">
@@ -433,20 +451,34 @@ function BackupKey({ privateKey }: { privateKey: string }) {
         <button
           type="button"
           className="btn-sm btn-outline mt-2 w-full"
-          onClick={() => {
-            if (
-              window.confirm(
-                "Reveal the agent private key on screen?\n\nAnyone who sees or records it controls this agent and its funds. Do not do this while screen-sharing.",
-              )
-            ) {
-              setRevealed(true)
-            }
-          }}
+          onClick={() => setAsking(true)}
         >
           <Eye className="h-3.5 w-3.5" />
           Reveal key to back up
         </button>
       )}
+
+      <ConfirmDialog
+        open={asking}
+        tone="danger"
+        title="Reveal the private key?"
+        body={
+          <>
+            <p>
+              Anyone who sees or records this key controls the agent and everything it holds.
+            </p>
+            <p className="text-white/60">
+              Do not reveal it while screen-sharing or recording.
+            </p>
+          </>
+        }
+        confirmLabel="Reveal"
+        onCancel={() => setAsking(false)}
+        onConfirm={() => {
+          setAsking(false)
+          setRevealed(true)
+        }}
+      />
     </div>
   )
 }

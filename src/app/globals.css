@@ -99,6 +99,24 @@ body {
     @apply bg-void-800 text-white hover:bg-void-700;
   }
 
+  .btn-danger {
+    @apply bg-alert text-black hover:bg-alert/80;
+  }
+
+  /*
+   * The native <dialog> arrives with a border, padding and centering of its own, and it is
+   * display:none until opened. Reset it to a card and let the element keep doing the focus
+   * trapping and Escape handling.
+   */
+  .nodea-dialog {
+    @apply m-auto max-w-none rounded-2xl border border-void-500 bg-void-900 p-0 text-white
+      shadow-2xl backdrop:bg-black/75;
+  }
+
+  .nodea-dialog::backdrop {
+    backdrop-filter: blur(3px);
+  }
+
   .field {
     @apply w-full rounded-xl border border-void-600 bg-void-950 px-4 py-3 font-mono text-[13px]
       text-white placeholder:text-white/25 focus:border-acid/60 focus:outline-none;
