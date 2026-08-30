@@ -180,7 +180,7 @@ src/app, src/components   Next.js 14 dashboard
 agent/                Autonomous agent runtime and GPU node daemon
 scripts/              Deploy, seed, narrated end-to-end demo, keygen
 test/                 Off-chain unit tests + live COTI integration suite
-docs/                 Architecture, privacy model, tokenomics, demo script
+docs/                 Architecture, privacy model, tokenomics, pre-flight, demo script
 ```
 
 ## Testing
@@ -227,6 +227,12 @@ RPC, the explorer — and the fact that mainnet gas is real. Select with `NODEA_
 
 Addresses are recorded in [`deployments/`](deployments/) and read by both the dashboard and the
 agent runtime.
+
+## Before going public
+
+[`docs/PREFLIGHT.md`](docs/PREFLIGHT.md) is the ordered checklist: what to run, what each step
+should print, what it means when it does not, and the failure modes that only appear once other
+people are using it.
 
 ## Licence
 
