@@ -2,11 +2,16 @@
  * The compute side of a Nodea node: decrypt the prompt, run inference, measure yourself.
  *
  * Nodea is a settlement and privacy layer, not a model host, so what a node actually runs is its
- * own business. Three backends, chosen by configuration:
+ * own business. Four backends, in priority order:
  *
- *   0G Compute   `ZEROG_PRIVATE_KEY` set — real decentralized GPU inference, metered on 0G
- *   HTTP         `NODEA_INFERENCE_URL` set — any OpenAI-compatible endpoint (vLLM, TGI, hosted)
- *   local        neither — a deterministic stand-in, so the demo runs offline with no keys
+ *   0G Router    `ZEROG_ROUTER_KEY` - one unified balance, 31 models, OpenAI-compatible
+ *   0G broker    `ZEROG_PRIVATE_KEY` - per-provider ledger, more control, 3 0G to open
+ *   HTTP         `NODEA_INFERENCE_URL` - any OpenAI-compatible endpoint (vLLM, TGI, hosted)
+ *   local        none of the above - a deterministic stand-in, so the demo runs with no keys
+ *
+ * The Router comes first because it is the one most operators will have: depositing on 0G's web
+ * UI funds the Router pool, not the SDK ledger, so a node can hold thousands of 0G and still see
+ * `addLedger` fail for want of three.
  *
  * 0G is the interesting one, because it makes the architecture literal rather than illustrative:
  * the agent pays the node in encrypted NDC on COTI, and the node redeems that into real GPU time
@@ -25,6 +30,12 @@ import {
   selectService,
   type ZeroGCompletion,
 } from "./zerog"
+import {
+  isRouterConfigured,
+  listRouterModels,
+  resolveRouterModel,
+  runRouterInference,
+} from "./zerogRouter"
 
 export interface InferenceResult {
   completion: string
@@ -35,7 +46,7 @@ export interface InferenceResult {
   /** Measured uptime over the job window, in basis points. */
   uptimeBps: number
   /** Which backend produced this, for the daemon's log and the operator's own records. */
-  backend: "0g" | "http" | "local"
+  backend: "0g-router" | "0g" | "http" | "local"
   /** Present only for 0G: the provider, model, and whether its TEE signature verified. */
   zeroG?: Pick<ZeroGCompletion, "provider" | "model" | "verified" | "completionTokens">
 }
@@ -54,6 +65,7 @@ export async function runInference(
   prompt: string,
   options: InferenceOptions,
 ): Promise<InferenceResult> {
+  if (isRouterConfigured()) return runOnRouter(prompt, options)
   if (isZeroGConfigured()) return runOnZeroG(prompt, options)
 
   const endpoint = process.env.NODEA_INFERENCE_URL
@@ -73,6 +85,44 @@ export async function runInference(
     latencyMs,
     uptimeBps: options.degrade ? 8_500 : 9_970,
     backend: endpoint ? "http" : "local",
+  }
+}
+
+/**
+ * Serve the job through the 0G Compute Router.
+ *
+ * Delivered volume is what the Router actually billed, floored to whole thousands because that is
+ * the unit `NodeaCompute` compares in-circuit against the order. Flooring is deliberate: it can
+ * only understate the node's own delivery, so a rounding artefact costs the node rather than
+ * shorting the agent.
+ */
+async function runOnRouter(prompt: string, options: InferenceOptions): Promise<InferenceResult> {
+  const model = resolveRouterModel(options.model, await listRouterModels())
+
+  const maxTokens = Number(options.orderedKTokens) * 1000
+  const started = Date.now()
+  const result = await runRouterInference(
+    prompt,
+    model,
+    // A degraded node deliberately under-delivers, so the circuit has something to catch.
+    options.degrade ? Math.max(1, Math.floor(maxTokens / 2)) : maxTokens,
+  )
+  const latencyMs = Date.now() - started
+
+  return {
+    completion: result.content,
+    deliveredKTokens: BigInt(Math.floor(result.completionTokens / 1000)),
+    latencyMs,
+    // Real measurement is the point of using 0G at all, so uptime is the only figure still
+    // self-reported here - see the oracle caveat in docs/PRIVACY.md.
+    uptimeBps: options.degrade ? 8_500 : 9_970,
+    backend: "0g-router",
+    zeroG: {
+      provider: "0g-router",
+      model: result.model,
+      verified: null,
+      completionTokens: result.completionTokens,
+    },
   }
 }
 

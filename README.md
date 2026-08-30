@@ -136,13 +136,19 @@ Nodea is a privacy and settlement layer, not a model host, so the GPU underneath
 
 | Backend | Enabled by | What it is |
 | --- | --- | --- |
-| **0G Compute** | `ZEROG_PRIVATE_KEY` | Real decentralized GPU inference, metered on 0G |
+| **0G Router** | `ZEROG_ROUTER_KEY` | One unified balance, 31 models, OpenAI-compatible |
+| 0G broker | `ZEROG_PRIVATE_KEY` | Per-provider ledger; more control, 3 0G to open one |
 | HTTP | `NODEA_INFERENCE_URL` | Any OpenAI-compatible endpoint (vLLM, TGI, hosted) |
-| local | neither | Deterministic stand-in — the demo runs offline with no keys |
+| local | none of the above | Deterministic stand-in — runs offline with no keys |
+
+The Router is the easy path: deposit 0G and create a key at
+[pc.0g.ai](https://pc.0g.ai), then set `ZEROG_ROUTER_KEY`.
+
+> **The two 0G balances are separate pools.** Depositing on the web UI funds the *Router*, not the
+> SDK ledger. A node can hold thousands of 0G and still see `addLedger` fail for want of three.
 
 ```bash
-npm run zerog:status     # ledger balance, providers, projected cost per job
-npm run zerog -- fund 0.1
+npm run zerog:status     # models, or ledger balance and providers
 npm run zerog:test       # one real inference, end to end
 ```
 

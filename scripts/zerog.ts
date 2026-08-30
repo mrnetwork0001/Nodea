@@ -20,6 +20,13 @@ import {
   runZeroGInference,
   selectService,
 } from "../agent/zerog"
+import {
+  isRouterConfigured,
+  listRouterModels,
+  resolveRouterModel,
+  routerBaseUrl,
+  runRouterInference,
+} from "../agent/zerogRouter"
 
 dotenv.config()
 
@@ -28,9 +35,20 @@ const SAMPLE_PROMPT_TOKENS = 400
 const SAMPLE_COMPLETION_TOKENS = 12_000
 
 async function main() {
+  const command = process.argv[2] ?? "status"
+
+  // The Router is checked first because it is the path most operators will actually have: a
+  // deposit on 0G's web UI funds the Router pool, not the SDK ledger.
+  if (isRouterConfigured()) {
+    await router(command)
+    return
+  }
+
   if (!isZeroGConfigured()) {
     console.log(
-      `\n  ZEROG_PRIVATE_KEY is not set.\n\n` +
+      `\n  Neither ZEROG_ROUTER_KEY nor ZEROG_PRIVATE_KEY is set.\n\n` +
+        `  Easiest path: deposit 0G at https://pc.0g.ai, create an API key, and set\n` +
+        `  ZEROG_ROUTER_KEY in .env. One balance, 31 models, no ledger minimum.\n\n` +
         `  Set it to the node operator's 0G wallet key in .env to back this node with real GPU\n` +
         `  inference. Without it the daemon uses a deterministic local stand-in, which is fine for\n` +
         `  development but is not real compute.\n`,
@@ -39,7 +57,6 @@ async function main() {
     return
   }
 
-  const command = process.argv[2] ?? "status"
   const { broker, address, network } = await connectZeroG()
 
   console.log(`\n  0G Compute — ${network.name}`)
@@ -161,6 +178,53 @@ async function test(broker: Awaited<ReturnType<typeof connectZeroG>>["broker"]) 
   )
   console.log(`  This is the inference a Nodea node serves. The agent pays for it in encrypted NDC`)
   console.log(`  on COTI and never learns what it cost the node to produce.\n`)
+}
+
+/** Router-backed status and smoke test. No wallet, no ledger - just the key. */
+async function router(command: string) {
+  console.log(`\n  0G Compute Router - ${routerBaseUrl()}\n`)
+
+  const models = await listRouterModels()
+
+  if (command === "status") {
+    console.log(`  ${models.length} models available:\n`)
+    for (const model of models.slice(0, 12)) {
+      console.log(
+        `    ${model.id.padEnd(34)} ${model.contextLength ? `ctx ${model.contextLength.toLocaleString()}` : ""}`,
+      )
+    }
+    if (models.length > 12) console.log(`    …and ${models.length - 12} more`)
+
+    console.log(`\n  Balance lives on the Router, visible at https://pc.0g.ai`)
+    console.log(`  A node serving "${process.env.ZEROG_MODEL ?? "<its advertised model>"}" resolves to:`)
+    try {
+      console.log(`    ${resolveRouterModel(process.env.ZEROG_MODEL ?? "llama", models)}\n`)
+    } catch (cause) {
+      console.log(`    ${(cause as Error).message}\n`)
+    }
+    return
+  }
+
+  if (command === "test") {
+    const model = resolveRouterModel(process.env.ZEROG_MODEL ?? "llama", models)
+    const prompt = "In one sentence: why does an AI agent need transaction privacy?"
+
+    console.log(`  model   ${model}`)
+    console.log(`  prompt  "${prompt}"\n`)
+
+    const started = Date.now()
+    const result = await runRouterInference(prompt, model, 200)
+
+    console.log(`  answer  ${result.content.trim()}\n`)
+    console.log(`  tokens  ${result.promptTokens} in / ${result.completionTokens} out`)
+    console.log(`  latency ${Date.now() - started}ms\n`)
+    console.log(`  This is the inference a Nodea node serves. The agent pays for it in encrypted`)
+    console.log(`  NDC on COTI and never learns what it cost the node to produce.\n`)
+    return
+  }
+
+  console.log(`  unknown command "${command}" - use status or test\n`)
+  process.exitCode = 1
 }
 
 main().catch((error) => {
