@@ -1,31 +1,60 @@
 ---
 name: nodea-coti
-description: Architecture, guidelines, COTI privacy primitives, Garbled Circuits, and Messaging SDK rules for Nodea built for the COTI Vibe Code Challenge.
+description: Architecture, COTI privacy primitives, and working rules for Nodea — the encrypted DeAI compute marketplace built for the COTI Web4 Vibe Code Challenge.
 ---
 
-# 🔐 Nodea — COTI Web4 Vibe Code Challenge Skill & Execution Guide
+# Nodea — working rules
 
-Use this skill whenever working on, reviewing, or developing **Nodea** — the Autonomous Encrypted DeAI Compute & Private Agentic Infrastructure on COTI Network.
+Use this when developing, reviewing or extending **Nodea**: autonomous encrypted DeAI compute on
+COTI. Full detail lives in [`docs/ARCHITECTURE.md`](../../../docs/ARCHITECTURE.md) and
+[`docs/PRIVACY.md`](../../../docs/PRIVACY.md); this file is the short version plus the rules that
+are easy to violate by accident.
 
-## 📌 Project Overview & Target
-- **Target Event:** COTI Web4 Vibe Code Challenge: Agent Edition
-- **Prize Target:** 1st Place (100,000 COTI + Liquidity Kickstart + Ecosystem Incubation)
-- **Primary Track:** Agent Infrastructure / Agentic App
-- **COTI Stack Integration:** Garbled Circuits + `coti-private-messaging` + `coti-private-erc20` + `coti-private-nft` + `coti-account-setup`
-- **Core Tech Stack:** TypeScript + `@coti-io/coti-sdk-typescript` + Next.js 14 + Solidity
+## Shape
 
-## 🏗️ Technical Architecture Rules
+- **Contracts**: `NodeaCompute` (escrow + SLA arbiter), `NodeaCredits` (PrivateERC20),
+  `NodeaSLA` (soulbound PrivateERC721), `NodeaPromptChannel` (PrivateMessaging).
+- **SDK**: `src/lib/nodea/` — one module per COTI privacy skill, written against a single
+  `CotiSigner` interface so `Wallet` and browser `JsonRpcSigner` share every code path.
+- **Runtimes**: `agent/run.ts` (hiring agent), `agent/node-daemon.ts` (GPU node).
+- **Stack**: Solidity 0.8.28 (`evmVersion: paris`), TypeScript, Next.js 14, `@coti-io/coti-ethers`.
 
-### 1. E2EE Prompt Transmission (`coti-private-messaging`)
-- Encrypt prompt payloads on-chain using COTI Private Messaging SDK so only authorized compute nodes can decrypt them.
+## Rules that are easy to break
 
-### 2. Confidential Token Micro-Settlement (`coti-private-erc20`)
-- Implement encrypted token balances for compute task escrow and auto-release.
+1. **Never materialise a confidential value in plaintext on chain.** Not in storage, not in an
+   event, not in a revert string. Amounts move as `gtUint256` and rest as `ctUint256`.
 
-### 3. Private NFT SLA Certificates (`coti-private-nft`)
-- Issue confidential ERC-721 receipts verifying compute SLA compliance.
+2. **`MpcCore.decrypt` is a budgeted resource.** There are exactly two declassifications in the
+   protocol — affordability in `openJob`, SLA verdict in `submitProof` — and both are justified in
+   `docs/PRIVACY.md`. Adding a third needs the same justification.
 
-## 🚨 Submission Checklist
-- Public GitHub repo under OSI-approved license (Apache 2.0 / MIT).
-- Deployed smart contracts on COTI.
-- Public X post tagging `@COTINetwork` with live app link & demo video.
+3. **Seal for every entitled reader, at write time.** Use `_seal()`, which produces the network
+   copy plus one per counterparty. A value offboarded only to the network is unreadable by humans
+   forever.
+
+4. **Input texts do not survive a contract hop.** A COTI `itUint256`/`itString` signature is bound
+   to `(signer, contract, selector)`. To pass a sealed value between contracts, `offBoard` it to a
+   `ctString`/`ctUint256` and `onBoard` it on the other side — see `NodeaSLA.issue`.
+
+5. **Sign every input text under the selector it will actually be submitted with.** The selectors
+   are exported as constants in `compute.ts`, `credits.ts` and `messaging.ts`. Regenerate them from
+   the ABI if a signature changes; a stale selector fails validation inside the precompile with an
+   unhelpful revert.
+
+6. **Chunk prompts on code-point boundaries, never on a fixed byte stride.** Chunks are decrypted
+   independently, so a split multi-byte character comes back as replacement characters. `chunkPrompt`
+   handles this; `test/nodea.test.ts` pins it.
+
+7. **Do not test garbled circuits on a local network.** There is no MPC precompile there, so the
+   test proves nothing. Circuit behaviour belongs in `test/integration.test.ts`, which runs against
+   live COTI and skips itself without keys or a deployment.
+
+8. **Watch the stack.** `NodeaCompute` is near the EVM stack limit. Prefer splitting a function
+   into private helpers over enabling `viaIR`.
+
+## Submission checklist
+
+- Public repo, Apache-2.0.
+- Contracts deployed on COTI testnet, addresses recorded in `deployments/`.
+- Public X post tagging `@COTINetwork` with the live app link and a sub-3-minute demo video
+  (script in [`docs/DEMO.md`](../../../docs/DEMO.md)).

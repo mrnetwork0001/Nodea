@@ -1,38 +1,156 @@
-# 🔐 Nodea — Autonomous Encrypted DeAI Compute & Private Agentic Infrastructure on COTI
+# Nodea
 
-> Built for **COTI Web4 Vibe Code Challenge: Agent Edition** (`stay.coti.io/vibe-coding`)  
-> **Target:** 1st Place (100,000 COTI + Liquidity Kickstart on Bancor + COTI Ecosystem Incubation)  
-> **Primary Track:** `Agent Infrastructure` / `Agentic App`  
-> **COTI Stack Integration:** Garbled Circuits (MPC) + `coti-account-setup` + `coti-private-messaging` + `coti-private-erc20` + `coti-private-nft`  
-> **License:** Apache 2.0 Open Source  
+**Autonomous encrypted DeAI compute on COTI.** AI agents hire GPU nodes, transmit prompts, and
+settle micro-payments without publishing a single number that an adversary could trade on.
 
----
-
-## 📌 Overview
-
-**Nodea** is an **Autonomous Encrypted DeAI Compute & Private Agentic Infrastructure Fleet** built natively on COTI's privacy stack.
-
-- **E2EE Prompt Transmission (`coti-private-messaging`):** AI agents transmit prompts, system instructions, and inference data to compute nodes via E2EE on-chain messaging.
-- **Confidential Token Micro-Settlement (`coti-private-erc20`):** Compute fees are settled confidentially per 1,000 tokens generated without exposing balance amounts.
-- **Private NFT SLA Execution Receipts (`coti-private-nft`):** Issues confidential ERC-721 proof certificates verifying compute uptime and model accuracy without leaking private input data.
-- **AES Key Generation (`coti-account-setup`):** Automates wallet creation and AES encryption key derivation for every agent.
+> Built for the [COTI Web4 Vibe Code Challenge: Agent Edition](https://stay.coti.io/vibe-coding).
+> Track: Agent Infrastructure. Licence: Apache-2.0.
 
 ---
 
-## 🚀 Quickstart & Setup Instructions
+## The problem
 
-### 1. Prerequisites
-- Node.js 18+
-- COTI EVM Wallet & Testnet Gas (`coti-starter-grant`)
+An AI agent that rents inference on a transparent chain leaks its entire operating profile.
+Its prompts — the system instructions, retrieved context, and reasoning that *are* the product —
+go on chain in the clear. Its payments reveal what it pays per thousand tokens, how many tokens it
+burns, which model it favours, and how much runway it has left. Competitors read that off a block
+explorer and front-run it, copy the prompt, and undercut the provider by one wei.
 
-### 2. Installation
-```bash
-git clone https://github.com/mrnetwork/Nodea.git
-cd Nodea
-npm install
+Providers have the mirror problem. A GPU operator cannot publish a rate card without inviting
+every rival to price just below it, so the market races to the bottom on price instead of
+competing on the reliability buyers actually want.
+
+## What Nodea does
+
+Nodea moves the *numbers* into COTI's garbled circuits and leaves only the *facts* on chain.
+
+| The chain publishes | The chain never sees |
+| --- | --- |
+| That a job happened, between which two addresses | The prompt, its instructions and context |
+| The node's model, hardware, region, SLA commitment | The node's price per 1k tokens |
+| Whether the node met that commitment | The agent's budget and ordered workload |
+| That an SLA certificate was minted | The cost, payout, refund, and both balances |
+
+Exactly **two bits** are deliberately declassified, and both are named in the contract:
+whether the sealed cost fit the sealed budget (which a revert would reveal anyway), and whether
+the node kept the SLA it published (because a reputation nobody can read is not a reputation).
+Everything else stays sealed. See [`docs/PRIVACY.md`](docs/PRIVACY.md) for the full threat model.
+
+---
+
+## The five COTI privacy skills, and where each one lives
+
+| Skill | Where | What it does here |
+| --- | --- | --- |
+| `coti-account-setup` | [`src/lib/nodea/account.ts`](src/lib/nodea/account.ts) | Derives each participant's AES key through `AccountOnboard`. Without it an account can move value but cannot read its own balances. |
+| `coti-private-messaging` | [`contracts/NodeaPromptChannel.sol`](contracts/NodeaPromptChannel.sol), [`src/lib/nodea/messaging.ts`](src/lib/nodea/messaging.ts) | Prompts sealed for one specific node, stored as `ctString` in three separately keyed views. |
+| `coti-private-erc20` | [`contracts/NodeaCredits.sol`](contracts/NodeaCredits.sol), [`src/lib/nodea/credits.ts`](src/lib/nodea/credits.ts) | NDC settlement asset: encrypted balances, allowances and transfers. |
+| `coti-private-nft` | [`contracts/NodeaSLA.sol`](contracts/NodeaSLA.sol), [`src/lib/nodea/sla.ts`](src/lib/nodea/sla.ts) | Soulbound confidential ERC-721 receipts with an encrypted telemetry manifest. |
+| `coti-smart-contracts` | [`contracts/NodeaCompute.sol`](contracts/NodeaCompute.sol), [`src/lib/nodea/compute.ts`](src/lib/nodea/compute.ts) | The escrow: prices, judges and splits every job inside MPC. |
+
+---
+
+## How a job runs
+
+```
+node     registerNode(model, gpu, region, promises, enc(price/1k))
+agent    promptChannel.sendMessage(node, enc(prompt))              -> messageId
+agent    credits.approve(escrow, enc(maxBudget))
+agent    openJob(nodeId, enc(kTokens), enc(maxBudget), messageId, deadline)
+           |- cost = sealed(price) x sealed(kTokens)                 garbled circuit
+           |- require cost <= sealed(budget)                         1 declassified bit
+           `- escrow cost, agent -> contract                         encrypted transfer
+node     submitProof(jobId, enc(tokens), enc(uptime), enc(latency), digest, enc(manifest))
+           |- slaMet = uptime >= promise                             garbled circuit
+           |         && latency <= promise
+           |         && delivered >= ordered                         1 declassified bit
+           |- payout = mux(slaMet, cost, cost x 60%)                 never revealed
+           `- mint confidential SLA certificate to the node
 ```
 
+The agent pays a price it never learns. The node is paid an amount it discovers only by decrypting
+its own copy. The escrow is conserved — payout plus refund always equals cost — and none of the
+three figures exists in plaintext anywhere on chain.
+
 ---
 
-## 📄 License
-Apache 2.0 Open Source
+## Quick start
+
+```bash
+npm install
+npm run compile          # contracts + regenerated ABIs
+npm test                 # off-chain unit tests (live tests self-skip)
+```
+
+### Deploy to COTI testnet
+
+```bash
+npm run keygen           # prints three identities; paste them into .env
+#   fund all three at https://faucet.coti.io  (COTI Discord faucet)
+npm run deploy:testnet   # deploys 4 contracts and wires permissions
+npm run seed             # registers a 3-node demo fleet, funds the agent
+```
+
+### See it work
+
+```bash
+npm run e2e              # the whole lifecycle in one narrated script
+npm run dev              # dashboard at http://localhost:3000
+```
+
+### Two autonomous processes, talking through encrypted on-chain messages
+
+```bash
+npm run node-daemon                 # terminal 1 — GPU node: decrypt, infer, prove
+npm run agent -- "your prompt"      # terminal 2 — agent: select, seal, escrow, settle
+npm run node-daemon -- --degrade    # under-deliver, and watch the circuit slash it
+```
+
+The node daemon calls a real inference endpoint if you set `NODEA_INFERENCE_URL` (any
+OpenAI-compatible URL); otherwise it runs a deterministic local stand-in, so the full demo works
+offline with no API keys.
+
+---
+
+## Repository
+
+```
+contracts/            NodeaCredits, NodeaSLA, NodeaPromptChannel, NodeaCompute
+src/lib/nodea/        TypeScript SDK — one module per COTI privacy skill
+src/app, src/components   Next.js 14 dashboard
+agent/                Autonomous agent runtime and GPU node daemon
+scripts/              Deploy, seed, narrated end-to-end demo, keygen
+test/                 Off-chain unit tests + live COTI integration suite
+docs/                 Architecture, privacy model, demo script
+```
+
+## Testing
+
+`npm test` runs the off-chain suite: prompt packing against COTI's 8-byte cell format (including
+the multi-byte UTF-8 case that naive slicing corrupts), credit arithmetic, the manifest codec, and
+the reputation scoring an agent uses to rank a fleet it cannot price.
+
+Anything involving a garbled circuit is tested against live COTI, because the MPC precompile exists
+there and nowhere else — a Hardhat network would let a meaningless test pass. Those live tests skip
+themselves until you have keys and a deployment:
+
+```bash
+npm run test:live
+```
+
+They assert both halves of the claim: that confidential values round-trip for the parties entitled
+to them, and that a third party gets a revert.
+
+## Networks
+
+| | Chain ID | RPC | Explorer |
+| --- | --- | --- | --- |
+| COTI Testnet | 7082400 | `https://testnet.coti.io/rpc` | [testnet.cotiscan.io](https://testnet.cotiscan.io) |
+| COTI Mainnet | 2632500 | `https://mainnet.coti.io/rpc` | [mainnet.cotiscan.io](https://mainnet.cotiscan.io) |
+
+Deployed addresses are recorded in [`deployments/`](deployments/) and read by both the dashboard
+and the agent runtime.
+
+## Licence
+
+Apache-2.0. See [LICENSE](LICENSE).
