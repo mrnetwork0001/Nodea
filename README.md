@@ -114,9 +114,28 @@ npm run agent -- "your prompt"      # terminal 2 — agent: select, seal, escrow
 npm run node-daemon -- --degrade    # under-deliver, and watch the circuit slash it
 ```
 
-The node daemon calls a real inference endpoint if you set `NODEA_INFERENCE_URL` (any
-OpenAI-compatible URL); otherwise it runs a deterministic local stand-in, so the full demo works
-offline with no API keys.
+### Real compute behind a node
+
+Nodea is a privacy and settlement layer, not a model host, so the GPU underneath is pluggable:
+
+| Backend | Enabled by | What it is |
+| --- | --- | --- |
+| **0G Compute** | `ZEROG_PRIVATE_KEY` | Real decentralized GPU inference, metered on 0G |
+| HTTP | `NODEA_INFERENCE_URL` | Any OpenAI-compatible endpoint (vLLM, TGI, hosted) |
+| local | neither | Deterministic stand-in — the demo runs offline with no keys |
+
+```bash
+npm run zerog:status     # ledger balance, providers, projected cost per job
+npm run zerog -- fund 0.1
+npm run zerog:test       # one real inference, end to end
+```
+
+The 0G account belongs to the **node operator**, not the agent. An agent hires a node and pays in
+encrypted NDC without ever learning what the node spent on GPU — so the operator's margin, the gap
+between what it charges on COTI and what compute cost it, stays as confidential as the prompt did.
+On a transparent chain both legs are visible and that margin is trivially computable.
+
+That is the division of labour: COTI is the part that cannot be substituted, and the silicon is.
 
 ---
 

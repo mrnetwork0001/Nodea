@@ -93,7 +93,7 @@ const FLOW = [
   {
     actor: "node",
     call: "submitProof(jobId, enc(tokens), enc(uptime), enc(latency))",
-    note: "Three conditions judged in-circuit against the node's public promises. One bit comes out: met, or not.",
+    note: "The node serves the job on real GPU — 0G Compute today, any provider tomorrow — then reports back. Three conditions judged in-circuit against its public promises. One bit comes out: met, or not.",
   },
   {
     actor: "circuit",
@@ -281,6 +281,12 @@ export function Audiences() {
           <p className="mt-2 text-xs leading-relaxed text-slate-400">
             Price honestly without a rival reading your rate card off the ledger. Build a portable,
             verifiable reliability record while your customers&apos; workloads stay confidential.
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+            Bring your own silicon: vLLM, TGI, or a decentralized network like 0G Compute. What
+            COTI protects is the part you cannot get anywhere else — your rate card, your
+            customers&apos; prompts, and the margin between what you charge and what compute cost
+            you.
           </p>
           <pre className="scroll-x mt-4 rounded-lg border border-ink-700/60 bg-ink-950/70 p-3 font-mono text-[11px] leading-relaxed text-slate-300">
             <code>{`npm run node-daemon`}</code>
