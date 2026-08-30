@@ -111,7 +111,20 @@ async function main() {
   const amounts = await compute.readJobAmounts(agent, deployment.compute, job.jobId)
   const after = await credits.balanceOf(agent, deployment.credits)
 
-  console.log(`\n  settled: SLA ${settled.slaMet ? "MET" : "BREACHED"} (the one public bit)`)
+  // The thing the whole transaction was for.
+  const result = await messaging.readResult(agent, deployment.promptChannel, job.jobId)
+
+  if (result) {
+    header("The answer")
+    console.log(result.text.trim())
+    console.log(
+      `\n  decrypted from ${result.complete ? "" : "an incomplete set of "}sealed messages -` +
+        ` readable by this agent alone.`,
+    )
+  }
+
+  header("Settlement")
+  console.log(`  SLA ${settled.slaMet ? "MET" : "BREACHED"} (the one public bit)`)
   console.log(`  paid to node   ${formatCredits(amounts.payout ?? 0n)} NDC`)
   console.log(`  returned       ${formatCredits(amounts.refund ?? 0n)} NDC`)
   console.log(`  delivered      ${amounts.delivered ?? 0n}k tokens vs ${amounts.workload ?? 0n}k ordered`)

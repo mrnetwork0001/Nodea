@@ -158,6 +158,134 @@ export async function readPrompt(
   return parts.join("")
 }
 
+// ---------------------------------------------------------------------------
+// Results
+// ---------------------------------------------------------------------------
+
+/**
+ * Envelope for an inference result travelling back to the agent.
+ *
+ * `NODEA1|<jobId>|<part>|<parts>|<text>` — a pipe-delimited header rather than JSON, because every
+ * byte spent on framing is a byte of answer that does not fit in a 1,536-byte message.
+ */
+const RESULT_PREFIX = "NODEA1"
+
+export interface JobResult {
+  jobId: number
+  text: string
+  /** True when every part of a multi-part result was found and reassembled. */
+  complete: boolean
+}
+
+/** Bytes of actual completion that fit in one message after the envelope header. */
+function resultCapacity(jobId: number, parts: number): number {
+  const header = `${RESULT_PREFIX}|${jobId}|${parts}|${parts}|`
+  return PROMPT_MAX_BYTES - UTF8.encode(header).length
+}
+
+/**
+ * Return the completion to the agent, sealed for it alone.
+ *
+ * The same `PrivateMessaging` channel that carried the prompt in, used in reverse. That symmetry
+ * is the point: the request and the answer get identical protection, and neither the chain nor any
+ * other node learns what was asked or what came back.
+ *
+ * A long completion is split across messages rather than truncated, because an answer cut off at
+ * 1,536 bytes is not an answer.
+ */
+export async function sendResult(
+  signer: CotiSigner,
+  channelAddress: string,
+  client: string,
+  jobId: number,
+  text: string,
+): Promise<{ messageIds: number[]; parts: number }> {
+  const bytes = UTF8.encode(text)
+  const perPart = resultCapacity(jobId, 1)
+  const parts = Math.max(1, Math.ceil(bytes.length / perPart))
+
+  const messageIds: number[] = []
+
+  for (let index = 0; index < parts; index++) {
+    // Slice on code points, not bytes: a part split mid-character would decode to replacement
+    // characters once the agent reassembles it.
+    const slice = sliceByBytes(text, index * perPart, perPart)
+    const envelope = `${RESULT_PREFIX}|${jobId}|${index}|${parts}|${slice}`
+
+    const sent = await sendPrompt(signer, channelAddress, client, envelope)
+    messageIds.push(sent.messageId)
+  }
+
+  return { messageIds, parts }
+}
+
+/** Take up to `maxBytes` of UTF-8 starting at byte `from`, without splitting a code point. */
+function sliceByBytes(text: string, from: number, maxBytes: number): string {
+  let seen = 0
+  let out = ""
+  let taken = 0
+
+  for (const codePoint of text) {
+    const size = UTF8.encode(codePoint).length
+    if (seen + size > from) {
+      if (taken + size > maxBytes) break
+      out += codePoint
+      taken += size
+    }
+    seen += size
+  }
+  return out
+}
+
+/**
+ * Find and decrypt the result for a job.
+ *
+ * Scans the caller's inbox newest-first for envelopes matching this job. The channel already
+ * enforces that only the sender and the addressed recipient can decrypt, so an agent reading its
+ * own inbox is the only party that can reassemble this.
+ */
+export async function readResult(
+  signer: CotiSigner,
+  channelAddress: string,
+  jobId: number,
+  { scan = 40 }: { scan?: number } = {},
+): Promise<JobResult | null> {
+  const account = await signer.getAddress()
+  const ids = await inbox(signer as unknown as ContractRunner, channelAddress, account, scan)
+
+  const found = new Map<number, string>()
+  let expected: number | null = null
+
+  for (const id of ids) {
+    let decrypted: string
+    try {
+      decrypted = await readPrompt(signer, channelAddress, id)
+    } catch {
+      continue // not ours to read, or not a text payload
+    }
+
+    if (!decrypted.startsWith(`${RESULT_PREFIX}|`)) continue
+
+    const [, job, part, parts, ...rest] = decrypted.split("|")
+    if (Number(job) !== jobId) continue
+
+    expected = Number(parts)
+    // The body may itself contain a pipe, so rejoin everything after the header.
+    found.set(Number(part), rest.join("|"))
+
+    if (found.size === expected) break
+  }
+
+  if (expected === null) return null
+
+  const ordered = Array.from({ length: expected }, (_, index) => found.get(index))
+  return {
+    jobId,
+    text: ordered.map((part) => part ?? "").join(""),
+    complete: ordered.every((part) => part !== undefined),
+  }
+}
+
 export async function getMessageMetadata(
   runner: ContractRunner | Provider,
   channelAddress: string,

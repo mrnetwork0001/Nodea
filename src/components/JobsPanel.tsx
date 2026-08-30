@@ -8,10 +8,11 @@
  * in this browser, for this account, on demand. Expanding a row is the fastest way to see the
  * boundary the whole protocol is built around.
  */
-import { ChevronDown, RefreshCw } from "lucide-react"
+import { ChevronDown, MessageSquareLock, RefreshCw } from "lucide-react"
 import { useState } from "react"
 import { formatCredits } from "@/lib/nodea/config"
 import * as compute from "@/lib/nodea/compute"
+import * as messaging from "@/lib/nodea/messaging"
 import { computeContract, normalizeCtUint256 } from "@/lib/nodea/contracts"
 import type { JobRecord } from "@/lib/nodea/types"
 import { useJobs } from "@/lib/useNodea"
@@ -132,6 +133,8 @@ function JobRow({
 
       {expanded && (
         <div className="space-y-3 border-t border-void-600 bg-void-950 px-5 py-4">
+          {settled && <JobResult jobId={job.id} />}
+
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <SealedValue
               label="Workload ordered"
@@ -172,6 +175,80 @@ function JobRow({
         </div>
       )}
     </li>
+  )
+}
+
+/**
+ * The answer the job was opened to buy.
+ *
+ * Everything else on this row - the escrow, the SLA verdict, the certificate - exists to make
+ * paying for this safe. The completion travels back down the same E2EE channel the prompt went
+ * out on, so it is sealed for this agent alone and decrypts here, in the browser, with the same
+ * AES key that read the balances.
+ */
+function JobResult({ jobId }: { jobId: number }) {
+  const { signer, status, deployment } = useWallet()
+  const [state, setState] = useState<"idle" | "loading" | "done" | "none">("idle")
+  const [text, setText] = useState<string | null>(null)
+  const [partial, setPartial] = useState(false)
+
+  const load = async () => {
+    if (!signer || !deployment) return
+    setState("loading")
+    try {
+      const result = await messaging.readResult(signer, deployment.promptChannel, jobId)
+      if (!result) {
+        setState("none")
+        return
+      }
+      setText(result.text)
+      setPartial(!result.complete)
+      setState("done")
+    } catch {
+      setState("none")
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-acid/30 bg-acid/5 px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="eyebrow flex items-center gap-2 text-acid">
+          <MessageSquareLock className="h-3 w-3" />
+          The answer
+        </p>
+        {state === "idle" && (
+          <button
+            type="button"
+            className="font-mono text-[10px] uppercase tracking-label text-acid hover:text-acid/80 disabled:opacity-35"
+            onClick={() => void load()}
+            disabled={status !== "ready"}
+            title={status === "ready" ? undefined : "Derive your AES key to decrypt"}
+          >
+            decrypt
+          </button>
+        )}
+        {state === "loading" && <Spinner className="h-3 w-3 text-acid" />}
+      </div>
+
+      {state === "idle" && <p className="mt-1.5 font-mono text-sm text-white/25">sealed</p>}
+
+      {state === "none" && (
+        <p className="mt-1.5 text-[11px] text-white/30">
+          No result found in this account&apos;s inbox. Jobs settled before results were returned
+          have none.
+        </p>
+      )}
+
+      {state === "done" && (
+        <>
+          <p className="mt-2 whitespace-pre-wrap text-[13px] leading-relaxed text-white">{text}</p>
+          <p className="mt-2 text-[10px] text-white/30">
+            {partial ? "Some parts are still arriving. " : ""}
+            Decrypted in this browser - the node sealed it for this agent alone.
+          </p>
+        </>
+      )}
+    </div>
   )
 }
 

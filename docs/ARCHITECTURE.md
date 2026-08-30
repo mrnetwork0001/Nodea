@@ -125,6 +125,18 @@ code-point boundaries instead, which keeps every chunk individually valid UTF-8 
 trip lossless for any input. `test/nodea.test.ts` pins this with CJK, Cyrillic, accented Latin and
 emoji.
 
+## The return leg
+
+The prompt goes in over `NodeaPromptChannel`; the completion comes back over the same channel,
+sealed for the agent alone. That symmetry is not decoration — it is the product. Everything else
+in the protocol exists to make paying for that answer safe.
+
+The result carries a compact envelope, `NODEA1|<jobId>|<part>|<parts>|<text>`, because a
+pipe-delimited header costs fewer bytes than JSON and every byte spent on framing is a byte of
+answer that does not fit in a 1,536-byte message. Longer completions split across messages rather
+than truncate, and the agent reassembles by scanning its own inbox — no contract change needed,
+since the channel already guarantees only the sender and recipient can decrypt.
+
 ## Runtimes
 
 **`agent/run.ts`** — surveys the public fleet, ranks it on reliability evidence (it cannot see

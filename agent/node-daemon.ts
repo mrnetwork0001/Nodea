@@ -116,7 +116,24 @@ async function serve(
     )
   }
 
-  // 4. Attest and settle. The digest binds the receipt to this exact completion, so the
+  // 4. Return the answer, sealed for the agent alone.
+  //
+  //    This is the product. Everything else - the escrow, the SLA, the certificate - exists to
+  //    make paying for this safe. It travels back down the same E2EE channel the prompt came in
+  //    on, so the request and the answer get identical protection.
+  const returned = await messaging.sendResult(
+    operator,
+    deployment.promptChannel,
+    job.client,
+    job.id,
+    result.completion,
+  )
+  console.log(
+    `     returned ${result.completion.length} chars in ${returned.parts} sealed ` +
+      `message${returned.parts === 1 ? "" : "s"} (#${returned.messageIds.join(", #")})`,
+  )
+
+  // 5. Attest and settle. The digest binds the receipt to this exact completion, so the
   //    certificate is evidence of *this* run rather than a generic claim of uptime.
   const attestationDigest = ethers.keccak256(
     ethers.toUtf8Bytes(`nodea:${job.id}:${node.modelId}:${result.completion}`),
