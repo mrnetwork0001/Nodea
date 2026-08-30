@@ -104,30 +104,35 @@ function JobRow({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-void-850"
+        className="flex w-full items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-void-850"
       >
-        <span className="font-mono text-xs text-white/40">#{job.id}</span>
+        <span className="mt-0.5 font-mono text-xs text-white/40">#{job.id}</span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-white">
-            node #{job.nodeId}
-            <span className="ml-2 text-xs text-white/40">
-              opened {new Date(job.openedAt * 1000).toLocaleString()}
-            </span>
+          {/* The status badge sits with the title on a narrow screen; the timestamp drops below,
+              since a wrapped date beside a node id reads as two half-lines of nothing. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <p className="text-sm text-white">node #{job.nodeId}</p>
+            {job.state === "Escrowed" && <Badge tone="warn">escrowed</Badge>}
+            {job.state === "Refunded" && <Badge tone="muted">reclaimed</Badge>}
+            {settled &&
+              (job.slaMet ? (
+                <Badge tone="acid">SLA met</Badge>
+              ) : (
+                <Badge tone="alert">SLA breached</Badge>
+              ))}
+          </div>
+          <p className="mt-1 text-[11px] text-white/40">
+            {new Date(job.openedAt * 1000).toLocaleString()}
           </p>
           <p className="text-[11px] text-white/40">
-            prompt message #{job.promptMessageId}
-            {job.certificateId > 0 && ` · SLA certificate #${job.certificateId}`}
+            message #{job.promptMessageId}
+            {job.certificateId > 0 && ` · certificate #${job.certificateId}`}
           </p>
         </div>
 
-        {job.state === "Escrowed" && <Badge tone="warn">escrowed</Badge>}
-        {job.state === "Refunded" && <Badge tone="muted">reclaimed</Badge>}
-        {settled &&
-          (job.slaMet ? <Badge tone="acid">SLA met</Badge> : <Badge tone="alert">SLA breached</Badge>)}
-
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-white/40 transition-transform ${expanded ? "rotate-180" : ""}`}
+          className={`mt-0.5 h-4 w-4 shrink-0 text-white/40 transition-transform ${expanded ? "rotate-180" : ""}`}
         />
       </button>
 

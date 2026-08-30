@@ -80,8 +80,75 @@ export function FleetTable({
         />
       )}
 
+      {/* Below md the table's 760px minimum turns into a horizontal scroll on a 390px screen,
+          which buries the Hire button off-canvas. Same data, laid out as cards instead. */}
       {ordered.length > 0 && (
-        <div className="scroll-x">
+        <ul className="divide-y divide-void-700 md:hidden">
+          {visible.map((node) => {
+            const total = node.jobsSettled + node.jobsBreached
+            const selected = node.id === selectedNodeId
+
+            return (
+              <li key={node.id} className={`p-5 ${selected ? "bg-acid/5" : ""}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-2.5">
+                    <Cpu className="mt-0.5 h-4 w-4 shrink-0 text-acid/70" />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-white">{node.modelId}</p>
+                      <Address value={node.operator} network={network} />
+                    </div>
+                  </div>
+                  {node.active ? (
+                    <button
+                      type="button"
+                      className={selected ? "btn-sm btn-acid" : "btn-sm btn-outline"}
+                      onClick={() => onSelect(node.id)}
+                    >
+                      {selected ? "selected" : "hire"}
+                    </button>
+                  ) : (
+                    <Badge>offline</Badge>
+                  )}
+                </div>
+
+                <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+                  <Field label="Hardware">
+                    {node.gpuClass}
+                    <span className="block text-[11px] text-white/35">{node.region}</span>
+                  </Field>
+                  <Field label="SLA promise">
+                    {(node.promisedUptimeBps / 100).toFixed(2)}% uptime
+                    <span className="block text-[11px] text-white/35">
+                      &lt;{node.promisedLatencyMs}ms TTFT
+                    </span>
+                  </Field>
+                  <Field label="Record">
+                    {total === 0 ? (
+                      <span className="text-white/35">unproven</span>
+                    ) : (
+                      <>
+                        {(reliability(node) * 100).toFixed(0)}%
+                        <span className="block text-[11px] text-white/35">
+                          {node.jobsSettled} met · {node.jobsBreached} breached
+                        </span>
+                      </>
+                    )}
+                  </Field>
+                  <Field label="Rate card">
+                    <span className="inline-flex items-center gap-1.5 font-mono text-xs text-acid/60">
+                      <Lock className="h-3 w-3" />
+                      encrypted
+                    </span>
+                  </Field>
+                </dl>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      {ordered.length > 0 && (
+        <div className="scroll-x hidden md:block">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-void-600 text-left">
@@ -193,5 +260,15 @@ export function FleetTable({
         </div>
       )}
     </Panel>
+  )
+}
+
+/** One labelled cell in the mobile card - the column header a card layout otherwise loses. */
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="eyebrow">{label}</dt>
+      <dd className="mt-1 text-sm text-white/70">{children}</dd>
+    </div>
   )
 }

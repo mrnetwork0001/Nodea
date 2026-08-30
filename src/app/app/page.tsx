@@ -28,26 +28,27 @@ export default function Dashboard() {
       <Header />
 
       <main className="shell py-8">
-        <div className="mb-7 flex flex-col gap-5 border-b border-void-600 pb-7 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="eyebrow mb-4 flex items-center gap-3">
+        <div className="mb-6 border-b border-void-600 pb-6 lg:mb-7 lg:pb-7">
+          <div className="flex items-center justify-between gap-4">
+            <p className="eyebrow flex items-center gap-3">
               <span className="text-acid">00</span>
               <span className="h-px w-8 bg-void-500" />
               {network.name}
             </p>
-            <h1 className="display-md">Console</h1>
-            <p className="muted mt-3 max-w-lg">
-              Hire compute, settle in ciphertext, and decrypt your own values locally. Nothing on
-              this page is read by a server - there isn&apos;t one.
-            </p>
+            <Link
+              href="/"
+              className="inline-flex shrink-0 items-center gap-2 font-mono text-[10px] uppercase tracking-label text-white/45 transition-colors hover:text-acid"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">How Nodea works</span>
+              <span className="sm:hidden">Back</span>
+            </Link>
           </div>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-label text-white/45 transition-colors hover:text-acid"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            How Nodea works
-          </Link>
+          <h1 className="display-md mt-4">Console</h1>
+          <p className="muted mt-3 max-w-lg">
+            Hire compute, settle in ciphertext, and decrypt your own values locally. Nothing on this
+            page is read by a server - there isn&apos;t one.
+          </p>
         </div>
 
         {deploymentError && (
@@ -56,16 +57,19 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* On a narrow screen the session and composer lead, because a fleet of ten nodes would
+            otherwise put the thing you came to do several screens down. `order` restores the
+            two-column reading order at lg, where both columns are visible at once. */}
         <div className="grid gap-3 lg:grid-cols-3">
-          <div className="space-y-3 lg:col-span-2">
+          <div className="space-y-3 lg:order-2">
+            <SessionPanel onChanged={bump} />
+            <JobComposer node={selectedNode} onJobOpened={bump} />
+          </div>
+
+          <div className="space-y-3 lg:order-1 lg:col-span-2">
             <FleetTable selectedNodeId={selectedNodeId} onSelect={setSelectedNodeId} />
             <JobsPanel refreshKey={refreshKey} />
             <CertificatePanel refreshKey={refreshKey} />
-          </div>
-
-          <div className="space-y-3">
-            <SessionPanel onChanged={bump} />
-            <JobComposer node={selectedNode} onJobOpened={bump} />
           </div>
         </div>
 
