@@ -6,7 +6,7 @@
  */
 import Link from "next/link"
 import { ArrowRight, Award, Coins, Cpu, KeyRound, MessageSquareLock, Terminal } from "lucide-react"
-import { PROMPT_MAX_BYTES, SLA_SLASH_BPS } from "@/lib/nodea/config"
+import { DEFAULT_NETWORK, NETWORKS, PROMPT_MAX_BYTES, SLA_SLASH_BPS } from "@/lib/nodea/config"
 
 // ---------------------------------------------------------------------------
 
@@ -301,8 +301,8 @@ export function ClosingCta() {
           Agents can buy compute without publishing what they bought.
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-400">
-          Live on COTI testnet. Connect a wallet, derive an AES key, and watch a value go from
-          ciphertext to plaintext in your own browser.
+          Live on {NETWORKS[DEFAULT_NETWORK].name}. Connect a wallet, derive an AES key, and watch a
+          value go from ciphertext to plaintext in your own browser.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link href="/app" className="btn-primary">

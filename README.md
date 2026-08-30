@@ -64,7 +64,7 @@ node     submitProof(jobId, enc(tokens), enc(uptime), enc(latency), digest, enc(
            |- slaMet = uptime >= promise                             garbled circuit
            |         && latency <= promise
            |         && delivered >= ordered                         1 declassified bit
-           |- payout = mux(slaMet, cost, cost x 60%)                 never revealed
+           |- payout = mux(slaMet, cost x 60%, cost)                 never revealed
            `- mint confidential SLA certificate to the node
 ```
 
@@ -80,22 +80,30 @@ three figures exists in plaintext anywhere on chain.
 npm install
 npm run compile          # contracts + regenerated ABIs
 npm test                 # off-chain unit tests (live tests self-skip)
+npm run dev              # dashboard at http://localhost:3000
 ```
 
-### Deploy to COTI testnet
+### Deploy to COTI mainnet
+
+Nodea targets mainnet. Deploying all four contracts costs roughly **0.02 COTI**
+at 2 gwei; budget ~0.5 COTI across the three accounts to cover deployment,
+onboarding and a seeded demo.
 
 ```bash
 npm run keygen           # prints three identities; paste them into .env
-#   fund all three at https://faucet.coti.io  (COTI Discord faucet)
-npm run deploy:testnet   # deploys 4 contracts and wires permissions
+#   fund all three — mainnet has no faucet
+npm run deploy           # deploys 4 contracts and wires permissions
 npm run seed             # registers a 3-node demo fleet, funds the agent
 ```
+
+To work for free instead, set `NODEA_NETWORK=cotiTestnet` in `.env`, fund the
+addresses from the [COTI faucet](https://faucet.coti.io), and use
+`npm run deploy:testnet`.
 
 ### See it work
 
 ```bash
 npm run e2e              # the whole lifecycle in one narrated script
-npm run dev              # dashboard at http://localhost:3000
 ```
 
 ### Two autonomous processes, talking through encrypted on-chain messages
@@ -135,8 +143,13 @@ there and nowhere else — a Hardhat network would let a meaningless test pass. 
 themselves until you have keys and a deployment:
 
 ```bash
-npm run test:live
+npm run test:live:testnet   # free
+npm run test:live           # follows NODEA_NETWORK
 ```
+
+The suite registers nodes and settles jobs rather than only reading, so on mainnet it spends real
+COTI and leaves test listings in the live registry. Pointing it at mainnet therefore takes a second
+opt-in — `NODEA_ALLOW_MAINNET_TESTS=1` — beyond simply having keys.
 
 They assert both halves of the claim: that confidential values round-trip for the parties entitled
 to them, and that a third party gets a revert.
@@ -145,8 +158,12 @@ to them, and that a third party gets a revert.
 
 | | Chain ID | RPC | Explorer |
 | --- | --- | --- | --- |
+| **COTI Mainnet** (default) | 2632500 | `https://mainnet.coti.io/rpc` | [mainnet.cotiscan.io](https://mainnet.cotiscan.io) |
 | COTI Testnet | 7082400 | `https://testnet.coti.io/rpc` | [testnet.cotiscan.io](https://testnet.cotiscan.io) |
-| COTI Mainnet | 2632500 | `https://mainnet.coti.io/rpc` | [mainnet.cotiscan.io](https://mainnet.cotiscan.io) |
+
+`AccountOnboard` lives at the same address on both, so the only differences are the chain id, the
+RPC, the explorer — and the fact that mainnet gas is real. Select with `NODEA_NETWORK` (scripts) or
+`NEXT_PUBLIC_NODEA_NETWORK` (dashboard).
 
 Deployed addresses are recorded in [`deployments/`](deployments/) and read by both the dashboard
 and the agent runtime.

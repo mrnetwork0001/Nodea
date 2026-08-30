@@ -50,7 +50,7 @@ export function FleetTable({
       {!error && fleet.length === 0 && !loading && (
         <EmptyState
           title="No nodes registered yet"
-          hint="Run `npm run seed` to register the demo fleet on COTI testnet."
+          hint={`Run \`npm run seed\` to register the demo fleet on ${network.name}.`}
         />
       )}
 

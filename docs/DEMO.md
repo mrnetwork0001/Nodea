@@ -6,14 +6,14 @@ For the submission video (`@COTINetwork`, link to the live app and this repo).
 
 ```bash
 npm install && npm run compile
-npm run keygen                  # paste into .env, fund all three at https://faucet.coti.io
-npm run deploy:testnet
+npm run keygen                  # paste into .env, then fund all three
+npm run deploy                  # COTI mainnet
 npm run seed
 npm run dev                     # http://localhost:3000
 ```
 
 Have four things open: the dashboard, a terminal, the node daemon in a second terminal, and one
-COTI explorer tab on the `NodeaCompute` address.
+[mainnet.cotiscan.io](https://mainnet.cotiscan.io) tab on the `NodeaCompute` address.
 
 ---
 

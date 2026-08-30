@@ -5,6 +5,7 @@
  * is persisted for you. Fund the printed addresses at https://faucet.coti.io before deploying.
  */
 import { ethers } from "ethers"
+import { DEFAULT_NETWORK, NETWORKS } from "../src/lib/nodea/config"
 
 const ROLES = [
   ["NODEA_DEPLOYER_KEY", "deployer — owns token admin roles"],
@@ -23,6 +24,8 @@ for (const [name, role] of ROLES) {
   console.log(`${name}=${wallet.privateKey}\n`)
 }
 
-console.log("# Fund all three at https://faucet.coti.io (COTI testnet):")
+const network = NETWORKS[DEFAULT_NETWORK]
+console.log(`# Target: ${network.name} — ${network.fundingHint}.`)
+console.log(`# Fund all three:`)
 for (const address of addresses) console.log(`#   ${address}`)
 console.log()

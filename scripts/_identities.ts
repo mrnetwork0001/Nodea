@@ -8,7 +8,7 @@
  */
 import * as dotenv from "dotenv"
 import { ethers, type Wallet } from "@coti-io/coti-ethers"
-import { NETWORKS, type NodeaNetworkKey } from "../src/lib/nodea/config"
+import { DEFAULT_NETWORK, NETWORKS, type NodeaNetworkKey } from "../src/lib/nodea/config"
 import { ensureOnboarded, walletFromKey } from "../src/lib/nodea/account"
 
 dotenv.config()
@@ -22,7 +22,8 @@ const ENV_KEYS: Record<Role, string> = {
 }
 
 export function networkKey(): NodeaNetworkKey {
-  return (process.env.NODEA_NETWORK as NodeaNetworkKey) ?? "cotiTestnet"
+  const requested = process.env.NODEA_NETWORK
+  return requested === "cotiTestnet" || requested === "cotiMainnet" ? requested : DEFAULT_NETWORK
 }
 
 export function loadWallet(role: Role): Wallet {
@@ -43,8 +44,7 @@ export async function prepare(role: Role): Promise<Wallet> {
 
   if (balance === 0n) {
     throw new Error(
-      `${role} (${wallet.address}) has no COTI on ${network.name}. ` +
-        `Request testnet gas at https://faucet.coti.io and retry.`,
+      `${role} (${wallet.address}) has no COTI on ${network.name}. To continue, ${network.fundingHint}.`,
     )
   }
 

@@ -4,7 +4,7 @@ import { WalletProvider } from "@/lib/wallet"
 export const metadata: Metadata = {
   title: "Nodea Console — Encrypted DeAI compute on COTI",
   description:
-    "Hire GPU nodes, seal prompts for a single operator, and settle in encrypted NDC on COTI testnet.",
+    "Hire GPU nodes, seal prompts for a single operator, and settle in encrypted NDC on COTI.",
 }
 
 /**

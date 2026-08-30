@@ -27,7 +27,8 @@ export class NotDeployedError extends Error {
   constructor(network: NodeaNetwork) {
     super(
       `Nodea is not deployed on ${network.name} yet. ` +
-        `Run \`npm run deploy:testnet\`, or set NEXT_PUBLIC_NODEA_* addresses.`,
+        `Run \`npm run deploy:${network.isMainnet ? "mainnet" : "testnet"}\`, ` +
+        `or set NEXT_PUBLIC_NODEA_* addresses.`,
     )
     this.name = "NotDeployedError"
   }

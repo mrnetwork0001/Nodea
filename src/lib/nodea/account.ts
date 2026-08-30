@@ -57,7 +57,7 @@ export class NotFundedError extends Error {
     super(
       `${address} holds ${ethers.formatEther(balance)} COTI on ${network.name}; ` +
         `onboarding needs at least ${ethers.formatEther(MIN_ONBOARD_BALANCE)}. ` +
-        `Fund it at https://faucet.coti.io and retry.`,
+        `To continue, ${network.fundingHint}.`,
     )
     this.name = "NotFundedError"
   }

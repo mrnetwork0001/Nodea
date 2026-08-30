@@ -14,7 +14,7 @@
 import { expect } from "chai"
 import * as dotenv from "dotenv"
 import { ethers, Wallet } from "@coti-io/coti-ethers"
-import { NETWORKS } from "../src/lib/nodea/config"
+import { DEFAULT_NETWORK, NETWORKS, type NodeaNetworkKey } from "../src/lib/nodea/config"
 import { formatCredits, parseCredits } from "../src/lib/nodea/config"
 import { ensureOnboarded, walletFromKey } from "../src/lib/nodea/account"
 import { isDeployed, loadDeployment, type NodeaDeployment } from "../src/lib/nodea/deployments"
@@ -26,18 +26,32 @@ import * as sla from "../src/lib/nodea/sla"
 
 dotenv.config()
 
-const NETWORK = NETWORKS.cotiTestnet
+const NETWORK_KEY: NodeaNetworkKey =
+  process.env.NODEA_NETWORK === "cotiTestnet" || process.env.NODEA_NETWORK === "cotiMainnet"
+    ? process.env.NODEA_NETWORK
+    : DEFAULT_NETWORK
+const NETWORK = NETWORKS[NETWORK_KEY]
+
 const HAVE_KEYS = Boolean(
   process.env.NODEA_NODE_OPERATOR_KEY && process.env.NODEA_AGENT_KEY && process.env.NODEA_DEPLOYER_KEY,
 )
-const RUNNABLE = HAVE_KEYS && isDeployed("cotiTestnet")
+
+/**
+ * These tests are not read-only: they register a node, open jobs and settle them. On mainnet that
+ * spends real COTI and leaves test listings in the live registry, so pointing the suite at mainnet
+ * takes a second, deliberate opt-in beyond simply having keys.
+ */
+const MAINNET_OPT_IN = process.env.NODEA_ALLOW_MAINNET_TESTS === "1"
+const NETWORK_OK = !NETWORK.isMainnet || MAINNET_OPT_IN
+
+const RUNNABLE = HAVE_KEYS && NETWORK_OK && isDeployed(NETWORK_KEY)
 
 const PROMPT = "SYSTEM: private alpha. Rank ETH/USDC pools by fee yield 予算は秘密 🔐"
 const PRICE_PER_KTOKEN = parseCredits("0.75")
 const WORKLOAD = 8n
 const BUDGET = parseCredits("20")
 
-;(RUNNABLE ? describe : describe.skip)("Nodea on COTI testnet", function () {
+;(RUNNABLE ? describe : describe.skip)(`Nodea on ${NETWORK.name}`, function () {
   this.timeout(900_000)
 
   let deployment: NodeaDeployment
@@ -47,7 +61,7 @@ const BUDGET = parseCredits("20")
   let nodeId: number
 
   before(async () => {
-    deployment = loadDeployment("cotiTestnet")
+    deployment = loadDeployment(NETWORK_KEY)
 
     operator = walletFromKey(process.env.NODEA_NODE_OPERATOR_KEY!, NETWORK)
     agent = walletFromKey(process.env.NODEA_AGENT_KEY!, NETWORK)
@@ -239,6 +253,9 @@ async function expectSealed(promise: Promise<unknown>, what: string): Promise<vo
 if (!RUNNABLE) {
   const reason = !HAVE_KEYS
     ? "no keys in .env — run `npm run keygen`"
-    : "nothing deployed — run `npm run deploy:testnet`"
+    : !NETWORK_OK
+      ? `target is ${NETWORK.name}; these tests spend real COTI, so set NODEA_ALLOW_MAINNET_TESTS=1 ` +
+        `to opt in, or NODEA_NETWORK=cotiTestnet to run them for free`
+      : `nothing deployed on ${NETWORK.name} — run \`npm run deploy:${NETWORK.isMainnet ? "mainnet" : "testnet"}\``
   console.log(`  (live COTI integration tests skipped: ${reason})`)
 }

@@ -18,6 +18,10 @@ export interface NodeaNetwork {
   /** COTI's AccountOnboard contract — the source of a user's AES key shares. */
   onboardContract: string
   nativeCurrency: { name: string; symbol: string; decimals: number }
+  /** True where gas has real value, so scripts can warn before spending it. */
+  isMainnet: boolean
+  /** Where to tell a user to get gas when an account is empty. */
+  fundingHint: string
 }
 
 export const NETWORKS: Record<NodeaNetworkKey, NodeaNetwork> = {
@@ -29,6 +33,8 @@ export const NETWORKS: Record<NodeaNetworkKey, NodeaNetwork> = {
     explorerUrl: "https://testnet.cotiscan.io",
     onboardContract: ONBOARD_CONTRACT_ADDRESS,
     nativeCurrency: { name: "COTI", symbol: "COTI", decimals: 18 },
+    isMainnet: false,
+    fundingHint: "request testnet gas at https://faucet.coti.io",
   },
   cotiMainnet: {
     key: "cotiMainnet",
@@ -38,10 +44,24 @@ export const NETWORKS: Record<NodeaNetworkKey, NodeaNetwork> = {
     explorerUrl: "https://mainnet.cotiscan.io",
     onboardContract: ONBOARD_CONTRACT_ADDRESS,
     nativeCurrency: { name: "COTI", symbol: "COTI", decimals: 18 },
+    isMainnet: true,
+    fundingHint: "send COTI to this address — mainnet gas has real value and there is no faucet",
   },
 }
 
-export const DEFAULT_NETWORK: NodeaNetworkKey = "cotiTestnet"
+/**
+ * Nodea targets COTI mainnet.
+ *
+ * `AccountOnboard` lives at the same address on both networks, so the only things that differ are
+ * the chain id, the RPC and the explorer — and the fact that gas here is real. Override with
+ * `NODEA_NETWORK=cotiTestnet` (scripts) or `NEXT_PUBLIC_NODEA_NETWORK=cotiTestnet` (dashboard).
+ */
+export const DEFAULT_NETWORK: NodeaNetworkKey = resolveNetwork()
+
+function resolveNetwork(): NodeaNetworkKey {
+  const requested = process.env.NEXT_PUBLIC_NODEA_NETWORK ?? process.env.NODEA_NETWORK
+  return requested === "cotiTestnet" || requested === "cotiMainnet" ? requested : "cotiMainnet"
+}
 
 /** NodeaCredits uses 6 decimals, matching the granularity of per-1k-token inference pricing. */
 export const CREDIT_DECIMALS = 6

@@ -50,7 +50,7 @@ export function SessionPanel({ onChanged }: { onChanged: () => void }) {
             address ? (
               <Address value={address} network={network} chars={6} />
             ) : (
-              "Connect an EVM wallet on COTI Testnet."
+              `Connect an EVM wallet on ${network.name}.`
             )
           }
           action={
