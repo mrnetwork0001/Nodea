@@ -1,36 +1,64 @@
 /**
  * The landing page's content sections.
  *
- * All server components — the landing page reads the same protocol constants the contracts and SDK
- * use, so a slash rate or a message ceiling can never drift out of sync with what the code does.
+ * Server components throughout — the landing reads the same protocol constants the contracts and
+ * SDK use, so a slash rate, a message ceiling or a deployed address can never drift out of sync
+ * with what the code actually does.
  */
 import Link from "next/link"
-import { ArrowRight, Award, Coins, Cpu, KeyRound, MessageSquareLock, Terminal } from "lucide-react"
-import { DEFAULT_NETWORK, NETWORKS, PROMPT_MAX_BYTES, SLA_SLASH_BPS } from "@/lib/nodea/config"
+import {
+  ArrowUpRight,
+  Award,
+  Coins,
+  Cpu,
+  Eye,
+  KeyRound,
+  Lock,
+  MessageSquareLock,
+  Terminal,
+} from "lucide-react"
+import {
+  DEFAULT_NETWORK,
+  NETWORKS,
+  PROMPT_MAX_BYTES,
+  SLA_SLASH_BPS,
+  explorerAddress,
+} from "@/lib/nodea/config"
+import { loadDeployment } from "@/lib/nodea/deployments"
+
+const NETWORK = NETWORKS[DEFAULT_NETWORK]
 
 // ---------------------------------------------------------------------------
 
 export function Section({
   id,
+  index,
   eyebrow,
   title,
   lede,
   children,
 }: {
   id?: string
+  index: string
   eyebrow: string
-  title: string
+  title: React.ReactNode
   lede?: string
   children?: React.ReactNode
 }) {
   return (
-    <section id={id} className="scroll-mt-20 border-t border-ink-800/60 py-16">
-      <p className="label mb-3 text-seal-400/80">{eyebrow}</p>
-      <h2 className="max-w-3xl text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl">
-        {title}
-      </h2>
-      {lede && <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-400">{lede}</p>}
-      {children && <div className="mt-8">{children}</div>}
+    <section id={id} className="scroll-mt-20 border-t border-void-600 py-20 sm:py-28">
+      <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="max-w-3xl">
+          <p className="eyebrow mb-5 flex items-center gap-3">
+            <span className="text-acid">{index}</span>
+            <span className="h-px w-8 bg-void-500" />
+            {eyebrow}
+          </p>
+          <h2 className="display-lg">{title}</h2>
+        </div>
+        {lede && <p className="lede max-w-md lg:text-right">{lede}</p>}
+      </div>
+      {children}
     </section>
   )
 }
@@ -39,15 +67,18 @@ export function Section({
 
 const LEAKS = [
   {
+    n: "01",
     title: "Prompt theft",
     body: "System instructions, retrieved context and reasoning traces are the agent's actual product. Sent to a compute marketplace in the clear, they are simply published — and copied by the next agent for free.",
   },
   {
+    n: "02",
     title: "Front-running",
     body: "Per-task payments reveal how much an agent pays per thousand tokens and how fast it burns. That is a live read on its strategy and its remaining runway, sitting on a public explorer.",
   },
   {
-    title: "A race to the bottom",
+    n: "03",
+    title: "Race to the bottom",
     body: "A GPU operator cannot publish a rate card without inviting every rival to price one wei under it. Transparency pushes the market to compete on price instead of the reliability buyers actually want.",
   },
 ] as const
@@ -56,15 +87,26 @@ export function Problem() {
   return (
     <Section
       id="problem"
+      index="01"
       eyebrow="The problem"
-      title="Renting inference on a transparent chain publishes your whole business."
-      lede="Three leaks, all structural, none fixable with off-chain tricks — the moment settlement touches a public ledger, the numbers are public."
+      title={
+        <>
+          Renting inference on a<br />
+          transparent chain publishes
+          <br />
+          <span className="text-acid">your whole business.</span>
+        </>
+      }
+      lede="Three leaks, all structural, none fixable off-chain — the moment settlement touches a public ledger, the numbers are public."
     >
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3">
         {LEAKS.map((leak) => (
-          <article key={leak.title} className="panel p-5">
-            <h3 className="text-sm font-semibold text-slate-100">{leak.title}</h3>
-            <p className="mt-2 text-xs leading-relaxed text-slate-400">{leak.body}</p>
+          <article key={leak.title} className="card p-7">
+            <span className="font-mono text-[10px] tracking-label text-acid">{leak.n}</span>
+            <h3 className="mt-5 font-display text-xl font-bold uppercase tracking-tighter">
+              {leak.title}
+            </h3>
+            <p className="muted mt-3">{leak.body}</p>
           </article>
         ))}
       </div>
@@ -106,24 +148,31 @@ export function HowItWorks() {
   return (
     <Section
       id="how"
+      index="02"
       eyebrow="How it works"
-      title="One job, five calls, nothing in the clear."
-      lede="The agent pays a price it never learns. The node is paid an amount it discovers by decrypting its own copy. Payout plus refund always equals cost — and none of the three exists in plaintext anywhere on chain."
+      title={
+        <>
+          One job, five calls,
+          <br />
+          nothing in the clear.
+        </>
+      }
+      lede="The agent pays a price it never learns. The node is paid an amount it discovers by decrypting its own copy. Payout plus refund always equals cost."
     >
-      <ol className="space-y-2">
+      <ol className="grid gap-3">
         {FLOW.map((step, index) => (
-          <li key={step.call} className="panel flex gap-4 p-4">
-            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink-700 font-mono text-[11px] text-slate-300">
-              {index + 1}
-            </span>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-baseline gap-x-3">
-                <span className="label text-clear-400/80">{step.actor}</span>
-                <code className="scroll-x whitespace-nowrap font-mono text-xs text-slate-200">
-                  {step.call}
-                </code>
-              </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{step.note}</p>
+          <li key={step.call} className="card flex flex-col gap-4 p-6 sm:flex-row sm:items-start">
+            <div className="flex shrink-0 items-center gap-4 sm:w-44">
+              <span className="font-mono text-[10px] tracking-label text-acid">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span className="chip border-void-500 text-white/50">{step.actor}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <code className="scroll-x block whitespace-nowrap font-mono text-[13px] text-white">
+                {step.call}
+              </code>
+              <p className="muted mt-2">{step.note}</p>
             </div>
           </li>
         ))}
@@ -170,20 +219,48 @@ const SKILLS = [
 export function Skills() {
   return (
     <Section
-      id="skills"
+      id="stack"
+      index="03"
       eyebrow="COTI stack"
-      title="Five privacy skills, each one load-bearing."
-      lede="Not five integrations bolted on for a checklist. Remove any one and the market stops working: without sealed messaging the prompt leaks, without sealed settlement the budget leaks, without the circuit there is nobody to arbitrate an SLA that neither party can see."
+      title={
+        <>
+          Five privacy skills,
+          <br />
+          each one <span className="text-acid">load-bearing.</span>
+        </>
+      }
+      lede="Not five integrations bolted on for a checklist. Remove any one and the market stops working."
     >
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {SKILLS.map(({ icon: Icon, ...skill }) => (
-          <article key={skill.skill} className="panel p-5">
-            <Icon className="h-4 w-4 text-seal-400" />
-            <h3 className="mt-3 text-sm font-semibold text-slate-100">{skill.title}</h3>
-            <code className="mt-1 block font-mono text-[10px] text-seal-400/70">{skill.skill}</code>
-            <p className="mt-2.5 text-xs leading-relaxed text-slate-400">{skill.body}</p>
+          <article key={skill.skill} className="card p-7">
+            <div className="flex items-start justify-between gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-acid/10 text-acid">
+                <Icon className="h-4 w-4" />
+              </span>
+              <code className="font-mono text-[10px] text-white/30">{skill.skill}</code>
+            </div>
+            <h3 className="mt-6 font-display text-xl font-bold uppercase leading-tight tracking-tighter">
+              {skill.title}
+            </h3>
+            <p className="muted mt-3">{skill.body}</p>
           </article>
         ))}
+
+        <article className="card-acid flex flex-col justify-between p-7">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-label text-black/60">
+              Verified on mainnet
+            </p>
+            <h3 className="mt-6 font-display text-xl font-bold uppercase leading-tight tracking-tighter">
+              Every claim on this page is checkable against a live deployment.
+            </h3>
+          </div>
+          <Link href="/app" className="btn-sm mt-8 self-start bg-black text-acid hover:bg-void-800">
+            Open the console
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        </article>
       </div>
     </Section>
   )
@@ -191,33 +268,59 @@ export function Skills() {
 
 // ---------------------------------------------------------------------------
 
+const LIMITS = [
+  [
+    "MPC trust",
+    "Garbled-circuit soundness rests on COTI's network and precompile. Solidity cannot re-prove it.",
+  ],
+  [
+    "Metadata",
+    "The transaction graph and timing stay visible. Nodea protects contents and amounts, not the graph.",
+  ],
+  [
+    "Node-side plaintext",
+    "A prompt is decrypted in the node's process, because that is the only way to run it. TEE attestation is the natural next layer.",
+  ],
+  [
+    "Self-reported telemetry",
+    "The circuit checks a node's claims against its commitments and delivered volume, but cannot independently measure a node.",
+  ],
+] as const
+
 export function Declassified() {
   return (
     <Section
-      id="honest"
+      id="leaks"
+      index="04"
       eyebrow="What leaks"
-      title="Exactly two bits are published on purpose."
+      title={
+        <>
+          Exactly two bits are
+          <br />
+          published <span className="text-acid">on purpose.</span>
+        </>
+      }
       lede="A privacy claim with no stated limits is not a serious one. Here is the whole boundary, and both halves are checkable against the contract."
     >
-      <div className="grid gap-4 lg:grid-cols-2">
-        <article className="panel p-5">
-          <p className="label text-clear-400/80">Bit one · affordability</p>
-          <h3 className="mt-2 text-sm font-semibold text-slate-100">
+      <div className="grid gap-3 lg:grid-cols-2">
+        <article className="card p-7">
+          <p className="eyebrow text-acid">Bit one · affordability</p>
+          <h3 className="mt-5 font-display text-2xl font-bold uppercase leading-tight tracking-tighter">
             Did the sealed cost fit the sealed budget?
           </h3>
-          <p className="mt-2 text-xs leading-relaxed text-slate-400">
+          <p className="muted mt-4">
             This discloses nothing new. The transaction either succeeds or reverts, and an observer
             learns the same bit from the outcome either way. It reveals <em>whether</em> the cost
             fit — never what either number was.
           </p>
         </article>
 
-        <article className="panel p-5">
-          <p className="label text-clear-400/80">Bit two · the SLA verdict</p>
-          <h3 className="mt-2 text-sm font-semibold text-slate-100">
+        <article className="card p-7">
+          <p className="eyebrow text-acid">Bit two · the SLA verdict</p>
+          <h3 className="mt-5 font-display text-2xl font-bold uppercase leading-tight tracking-tighter">
             Did the node keep the promise it published?
           </h3>
-          <p className="mt-2 text-xs leading-relaxed text-slate-400">
+          <p className="muted mt-4">
             A genuine disclosure, and a deliberate one: a marketplace where reliability cannot be
             verified is one nobody can safely buy in. The verdict is public, the measurements are
             not — and the payout is still selected inside the circuit from the encrypted bit.
@@ -225,34 +328,20 @@ export function Declassified() {
         </article>
       </div>
 
-      <div className="panel mt-4 p-5">
-        <h3 className="text-sm font-semibold text-slate-100">And the limits we do not paper over</h3>
-        <ul className="mt-3 grid gap-2 text-xs leading-relaxed text-slate-400 md:grid-cols-2">
-          <li>
-            <strong className="font-medium text-slate-300">MPC trust.</strong> Garbled-circuit
-            soundness rests on COTI&apos;s network and precompile. Solidity cannot re-prove it.
-          </li>
-          <li>
-            <strong className="font-medium text-slate-300">Metadata.</strong> The transaction graph
-            and timing stay visible. Nodea protects contents and amounts, not the graph.
-          </li>
-          <li>
-            <strong className="font-medium text-slate-300">Node-side plaintext.</strong> A prompt is
-            decrypted in the node&apos;s process, because that is the only way to run it. TEE
-            attestation is the natural next layer.
-          </li>
-          <li>
-            <strong className="font-medium text-slate-300">Self-reported telemetry.</strong> The
-            circuit checks a node&apos;s claims against its commitments and delivered volume, but it
-            cannot independently measure a node.
-          </li>
+      <div className="card mt-3 p-7">
+        <h3 className="font-display text-lg font-bold uppercase tracking-tighter">
+          And the limits we do not paper over
+        </h3>
+        <ul className="mt-5 grid gap-x-10 gap-y-3 md:grid-cols-2">
+          {LIMITS.map(([title, body]) => (
+            <li key={title} className="flex gap-3">
+              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-acid" />
+              <p className="muted">
+                <strong className="font-semibold text-white">{title}.</strong> {body}
+              </p>
+            </li>
+          ))}
         </ul>
-        <p className="mt-4 text-xs text-slate-500">
-          The full threat model lives in{" "}
-          <code className="font-mono text-seal-400/80">docs/PRIVACY.md</code>, and{" "}
-          <code className="font-mono text-seal-400/80">npm run test:live</code> asserts both
-          directions against a real deployment.
-        </p>
       </div>
     </Section>
   )
@@ -262,33 +351,52 @@ export function Declassified() {
 
 export function Audiences() {
   return (
-    <Section eyebrow="Who it is for" title="Two sides of one market.">
-      <div className="grid gap-4 lg:grid-cols-2">
-        <article className="panel p-5">
-          <h3 className="text-sm font-semibold text-slate-100">If you run an agent</h3>
-          <p className="mt-2 text-xs leading-relaxed text-slate-400">
+    <Section
+      index="05"
+      eyebrow="Who it is for"
+      title={
+        <>
+          Two sides of
+          <br />
+          one market.
+        </>
+      }
+    >
+      <div className="grid gap-3 lg:grid-cols-2">
+        <article className="card p-7">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-acid/10 text-acid">
+            <Eye className="h-4 w-4" />
+          </span>
+          <h3 className="mt-6 font-display text-2xl font-bold uppercase tracking-tighter">
+            If you run an agent
+          </h3>
+          <p className="muted mt-3">
             Hire inference without publishing your prompts, your burn rate, or how much runway you
             have left. Commit a sealed ceiling and let the circuit enforce it against a price you
             never see.
           </p>
-          <pre className="scroll-x mt-4 rounded-lg border border-ink-700/60 bg-ink-950/70 p-3 font-mono text-[11px] leading-relaxed text-slate-300">
+          <pre className="scroll-x mt-6 rounded-xl border border-void-600 bg-void-950 p-4 font-mono text-[11px] text-acid">
             <code>{`npm run agent -- "your prompt here"`}</code>
           </pre>
         </article>
 
-        <article className="panel p-5">
-          <h3 className="text-sm font-semibold text-slate-100">If you run GPUs</h3>
-          <p className="mt-2 text-xs leading-relaxed text-slate-400">
+        <article className="card p-7">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-acid/10 text-acid">
+            <Lock className="h-4 w-4" />
+          </span>
+          <h3 className="mt-6 font-display text-2xl font-bold uppercase tracking-tighter">
+            If you run GPUs
+          </h3>
+          <p className="muted mt-3">
             Price honestly without a rival reading your rate card off the ledger. Build a portable,
             verifiable reliability record while your customers&apos; workloads stay confidential.
           </p>
-          <p className="mt-2 text-xs leading-relaxed text-slate-500">
-            Bring your own silicon: vLLM, TGI, or a decentralized network like 0G Compute. What
-            COTI protects is the part you cannot get anywhere else — your rate card, your
-            customers&apos; prompts, and the margin between what you charge and what compute cost
-            you.
+          <p className="muted mt-3">
+            Bring your own silicon: vLLM, TGI, or a decentralized network like 0G Compute. What COTI
+            protects is the part you cannot get anywhere else — your rate card, your customers&apos;
+            prompts, and the margin between what you charge and what compute cost you.
           </p>
-          <pre className="scroll-x mt-4 rounded-lg border border-ink-700/60 bg-ink-950/70 p-3 font-mono text-[11px] leading-relaxed text-slate-300">
+          <pre className="scroll-x mt-6 rounded-xl border border-void-600 bg-void-950 p-4 font-mono text-[11px] text-acid">
             <code>{`npm run node-daemon`}</code>
           </pre>
         </article>
@@ -299,24 +407,143 @@ export function Audiences() {
 
 // ---------------------------------------------------------------------------
 
+const FAQ = [
+  {
+    q: "If the price is encrypted, how does an agent choose a node?",
+    a: "On everything else, which is public: the model, the hardware, the region, the uptime and latency the operator committed to, and the settled-versus-breached record those commitments actually produced. The agent commits a sealed budget ceiling and the garbled circuit enforces it against a rate nobody at the table can read. Nobody can undercut a price they cannot see, so operators compete on reliability instead — which is what the buyer wanted to buy.",
+  },
+  {
+    q: "Who can decrypt what?",
+    a: "Each confidential value is sealed once per entitled reader. A node's rate card decrypts only for its operator. A job's cost, payout, refund and workload decrypt for the two counterparties and nobody else — the contract reverts the read for anyone who is not one of them. A prompt decrypts for its sender and the node it was addressed to. An SLA manifest decrypts only for the operator that owns the certificate.",
+  },
+  {
+    q: "Does this actually run, or is it a mock?",
+    a: "It runs. All four contracts are deployed on COTI mainnet and the integration suite settles real jobs against them, asserting both that confidential values round-trip for entitled parties and that third parties get a revert. Nodes serve inference from 0G Compute when configured, so the GPU work is real too.",
+  },
+  {
+    q: "What stops a node from lying about its uptime?",
+    a: "Partly the circuit, partly nothing — and we would rather say so. Three conditions are compared in-circuit against the node's public commitments: uptime, latency, and delivered volume against what the agent ordered. Under-delivery is caught outright. But a node still reports its own uptime, so that figure is an oracle problem rather than a privacy one. TEE attestation binding into the certificate's attestation digest is the natural next layer.",
+  },
+  {
+    q: "Why COTI rather than a rollup with ZK proofs?",
+    a: "Because the computation itself has to happen over data nobody is allowed to see. A ZK proof shows a computation was performed correctly on inputs the prover already knows. Here the contract must multiply a price only the node knows by a workload only the agent knows, compare the product against a budget only the agent knows, and pay out — with no party learning the others' inputs. That is multi-party computation, and COTI's garbled circuits do it natively at the contract level.",
+  },
+] as const
+
+export function Faq() {
+  return (
+    <Section
+      id="faq"
+      index="06"
+      eyebrow="FAQ"
+      title={
+        <>
+          Frequently asked
+          <br />
+          questions.
+        </>
+      }
+    >
+      <div className="grid gap-3">
+        {FAQ.map((item, index) => (
+          <details key={item.q} className="card group p-0">
+            <summary className="flex cursor-pointer list-none items-start gap-5 p-6 [&::-webkit-details-marker]:hidden">
+              <span className="mt-1 font-mono text-[10px] tracking-label text-acid">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <h3 className="flex-1 font-display text-base font-bold uppercase leading-snug tracking-tighter sm:text-lg">
+                {item.q}
+              </h3>
+              <span className="mt-0.5 font-mono text-lg leading-none text-acid transition-transform group-open:rotate-45">
+                +
+              </span>
+            </summary>
+            <p className="muted border-t border-void-700 px-6 py-5 sm:pl-[3.75rem]">{item.a}</p>
+          </details>
+        ))}
+      </div>
+    </Section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+
+/** Deployed addresses, read from the same record the dashboard and agent runtime use. */
+export function Deployment() {
+  let contracts: Array<[string, string]> = []
+
+  try {
+    const d = loadDeployment(DEFAULT_NETWORK)
+    contracts = [
+      ["NodeaCompute", d.compute],
+      ["NodeaCredits", d.credits],
+      ["NodeaSLA", d.sla],
+      ["NodeaPromptChannel", d.promptChannel],
+    ]
+  } catch {
+    // Not deployed on this network yet; the section simply does not render.
+    return null
+  }
+
+  return (
+    <Section
+      index="07"
+      eyebrow="Deployment"
+      title={
+        <>
+          Live on
+          <br />
+          {NETWORK.name}.
+        </>
+      }
+      lede="Open any of them. A transaction happened; there is not a number in it."
+    >
+      <div className="card divide-y divide-void-700">
+        {contracts.map(([name, address]) => (
+          <a
+            key={name}
+            href={explorerAddress(NETWORK, address)}
+            target="_blank"
+            rel="noreferrer"
+            className="group flex flex-col gap-2 px-6 py-5 transition-colors hover:bg-void-850 sm:flex-row sm:items-center sm:justify-between"
+          >
+            {/* Kept in camel case: "NODEAPROMPTCHANNEL" is a wall of letters, and these are
+                identifiers a reader may want to match against the repo. */}
+            <span className="font-display text-sm font-bold tracking-tight">{name}</span>
+            <span className="scroll-x flex items-center gap-2 whitespace-nowrap font-mono text-xs text-white/40 transition-colors group-hover:text-acid">
+              {address}
+              <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+            </span>
+          </a>
+        ))}
+      </div>
+    </Section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+
 export function ClosingCta() {
   return (
-    <section className="border-t border-ink-800/60 py-16">
-      <div className="panel border-seal-500/30 bg-gradient-to-br from-seal-500/10 to-transparent p-8 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-50">
-          Agents can buy compute without publishing what they bought.
-        </h2>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-400">
-          Live on {NETWORKS[DEFAULT_NETWORK].name}. Connect a wallet, derive an AES key, and watch a
-          value go from ciphertext to plaintext in your own browser.
+    <section className="border-t border-void-600 py-20 sm:py-28">
+      <div className="card-acid px-8 py-16 text-center sm:px-16 sm:py-24">
+        <p className="font-mono text-[10px] uppercase tracking-label text-black/60">
+          COTI Web4 Vibe Code Challenge
         </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/app" className="btn-primary">
+        <h2 className="display mx-auto mt-7 max-w-4xl text-[clamp(2rem,5.5vw,4.5rem)]">
+          It&apos;s time agents stopped publishing what they buy.
+        </h2>
+        <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-black/70">
+          Connect a wallet, derive an AES key, and watch a value go from ciphertext to plaintext in
+          your own browser.
+        </p>
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <Link href="/app" className="btn-lg bg-black text-acid hover:bg-void-800">
             Launch app
-            <ArrowRight className="h-4 w-4" />
+            <ArrowUpRight className="h-4 w-4" />
           </Link>
           <a
-            className="btn-ghost"
+            className="btn-lg border border-black/25 text-black hover:bg-black/5"
             href="https://github.com/mrnetwork0001/Nodea"
             target="_blank"
             rel="noreferrer"
@@ -332,12 +559,47 @@ export function ClosingCta() {
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-ink-800/60 py-8 text-xs text-slate-600">
-      <p>
-        Nodea · Apache-2.0 · built on COTI for the Web4 Vibe Code Challenge. A met SLA pays the
-        escrow in full; a breach withholds {`${SLA_SLASH_BPS / 100}%`} and returns it to the agent —
-        both amounts encrypted.
-      </p>
+    <footer className="border-t border-void-600 pt-14">
+      <div className="flex flex-col gap-5 pb-12 sm:flex-row sm:items-center sm:justify-between">
+        <p className="muted max-w-md">
+          Nodea · Apache-2.0 · built on COTI. A met SLA pays the escrow in full; a breach withholds{" "}
+          {SLA_SLASH_BPS / 100}% and returns it to the agent — both amounts encrypted.
+        </p>
+        <div className="flex items-center gap-6">
+          <a
+            className="font-mono text-[10px] uppercase tracking-label text-white/45 hover:text-acid"
+            href="https://github.com/mrnetwork0001/Nodea"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub
+          </a>
+          <a
+            className="font-mono text-[10px] uppercase tracking-label text-white/45 hover:text-acid"
+            href={NETWORK.explorerUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Explorer
+          </a>
+          <Link
+            className="font-mono text-[10px] uppercase tracking-label text-white/45 hover:text-acid"
+            href="/app"
+          >
+            Console
+          </Link>
+        </div>
+      </div>
+
+      {/* The wordmark as a closing full-bleed mark, clipped by the viewport rather than scaled. */}
+      <div className="overflow-hidden">
+        <p
+          aria-hidden
+          className="display select-none text-center text-[clamp(4rem,19vw,17rem)] leading-none text-white/[0.07]"
+        >
+          NODEA
+        </p>
+      </div>
     </footer>
   )
 }

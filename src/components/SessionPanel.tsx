@@ -57,7 +57,7 @@ export function SessionPanel({ onChanged }: { onChanged: () => void }) {
             status === "disconnected" || status === "connecting" ? (
               <button
                 type="button"
-                className="btn-primary !py-1.5 text-xs"
+                className="btn-sm btn-acid"
                 onClick={() => void connect()}
                 disabled={status === "connecting" || !hasWallet}
               >
@@ -81,7 +81,7 @@ export function SessionPanel({ onChanged }: { onChanged: () => void }) {
             status === "connected" || status === "onboarding" ? (
               <button
                 type="button"
-                className="btn-primary !py-1.5 text-xs"
+                className="btn-sm btn-acid"
                 onClick={() => void onboard()}
                 disabled={status === "onboarding"}
               >
@@ -98,18 +98,18 @@ export function SessionPanel({ onChanged }: { onChanged: () => void }) {
           done={balance !== null && balance > 0n}
           detail={
             status !== "ready" ? (
-              <span className="font-mono text-seal-400/60">sealed</span>
+              <span className="font-mono text-white/25">sealed</span>
             ) : balance === null ? (
               "reading…"
             ) : (
-              <span className="font-mono text-clear-400">{formatCredits(balance)} NDC</span>
+              <span className="font-mono text-acid">{formatCredits(balance)} NDC</span>
             )
           }
           action={
             status === "ready" && !claimed ? (
               <button
                 type="button"
-                className="btn-clear !py-1.5 text-xs"
+                className="btn-sm btn-acid"
                 onClick={() => void claim()}
                 disabled={claiming}
               >
@@ -143,19 +143,19 @@ function Step({
   return (
     <div
       className={`flex items-center gap-3 rounded-lg border px-3.5 py-3 ${
-        done ? "border-clear-500/30 bg-clear-500/5" : "border-ink-700/60 bg-ink-850/30"
+        done ? "border-acid/30 bg-acid/5" : "border-void-600 bg-void-850"
       }`}
     >
       <span
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium ${
-          done ? "bg-clear-500/20 text-clear-400" : "bg-ink-700 text-slate-400"
+          done ? "bg-acid/20 text-acid" : "bg-void-700 text-white/45"
         }`}
       >
         {index}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-slate-200">{title}</p>
-        <div className="mt-0.5 text-[11px] text-slate-500">{detail}</div>
+        <p className="text-xs font-medium text-white">{title}</p>
+        <div className="mt-0.5 text-[11px] text-white/40">{detail}</div>
       </div>
       {action}
     </div>

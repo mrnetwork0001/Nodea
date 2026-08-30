@@ -5,46 +5,46 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: {
-          950: "#050609",
-          900: "#0a0c12",
-          850: "#0f121a",
-          800: "#151925",
-          700: "#1d2231",
-          600: "#2a3145",
+        /** Near-black ground and the surfaces that sit on it. */
+        void: {
+          DEFAULT: "#000000",
+          950: "#050505",
+          900: "#0A0A0A",
+          850: "#0F0F0F",
+          800: "#141414",
+          700: "#1C1C1C",
+          600: "#262626",
+          500: "#333333",
         },
-        seal: {
-          // Sealed / encrypted state.
-          400: "#7c8cff",
-          500: "#5b6cf0",
-          600: "#4553d4",
+        /** The single accent. Used for emphasis, never for body text on dark. */
+        acid: {
+          DEFAULT: "#CDFF00",
+          400: "#DBFF4D",
+          500: "#CDFF00",
+          600: "#A6CF00",
         },
-        clear: {
-          // Decrypted / plaintext state.
-          400: "#3fd9c0",
-          500: "#22c3a8",
-        },
-        warn: {
-          400: "#f6a94a",
-          500: "#e08a20",
-        },
-        breach: {
-          400: "#ff6b81",
-          500: "#e8455f",
-        },
+        /** Decrypted / verified state. */
+        live: "#CDFF00",
+        /** Breach / exposed state. */
+        alert: "#FF4D4D",
       },
       fontFamily: {
-        sans: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Inter", "sans-serif"],
-        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "JetBrains Mono", "monospace"],
+        sans: ["var(--font-display)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+      },
+      letterSpacing: {
+        tightest: "-0.045em",
+        tighter: "-0.03em",
+        label: "0.18em",
       },
       animation: {
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        shimmer: "shimmer 2.2s linear infinite",
+        marquee: "marquee 34s linear infinite",
       },
       keyframes: {
-        shimmer: {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
         },
       },
     },

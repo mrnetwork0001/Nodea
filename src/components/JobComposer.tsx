@@ -167,10 +167,10 @@ export function JobComposer({
       <div className="space-y-4 p-5">
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <label htmlFor="nodea-prompt" className="label">
+            <label htmlFor="nodea-prompt" className="eyebrow">
               Prompt
             </label>
-            <span className={`text-[11px] ${oversized ? "text-breach-400" : "text-slate-500"}`}>
+            <span className={`text-[11px] ${oversized ? "text-alert" : "text-white/40"}`}>
               {promptBytes} / {PROMPT_MAX_BYTES} bytes
             </span>
           </div>
@@ -181,8 +181,8 @@ export function JobComposer({
             onChange={(event) => setPrompt(event.target.value)}
             placeholder="Your agent's system instructions…"
           />
-          <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500">
-            <Lock className="h-3 w-3 text-seal-400/70" />
+          <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-white/40">
+            <Lock className="h-3 w-3 text-acid/70" />
             {node
               ? `Encrypted in this browser. Only node #${node.id} can decrypt it.`
               : "Encrypted in this browser, for whichever node you hire."}
@@ -191,7 +191,7 @@ export function JobComposer({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label htmlFor="nodea-workload" className="label mb-1.5 block">
+            <label htmlFor="nodea-workload" className="eyebrow mb-2 block">
               Workload (k tokens)
             </label>
             <input
@@ -203,7 +203,7 @@ export function JobComposer({
             />
           </div>
           <div>
-            <label htmlFor="nodea-budget" className="label mb-1.5 block">
+            <label htmlFor="nodea-budget" className="eyebrow mb-2 block">
               Max budget (NDC)
             </label>
             <input
@@ -224,29 +224,29 @@ export function JobComposer({
                 key={step.key}
                 className={`flex gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
                   state.status === "done"
-                    ? "border-clear-500/40 bg-clear-500/5"
+                    ? "border-acid/40 bg-acid/5"
                     : state.status === "running"
-                      ? "border-seal-500/50 bg-seal-500/5"
-                      : "border-ink-700/60 bg-ink-850/30"
+                      ? "border-acid/50 bg-acid/5"
+                      : "border-void-600 bg-void-850"
                 }`}
               >
                 <span
                   className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium ${
                     state.status === "done"
-                      ? "bg-clear-500/20 text-clear-400"
-                      : "bg-ink-700 text-slate-400"
+                      ? "bg-acid/20 text-acid"
+                      : "bg-void-700 text-white/45"
                   }`}
                 >
                   {state.status === "running" ? <Spinner className="h-3 w-3" /> : index + 1}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="text-xs font-medium text-slate-200">{step.title}</p>
-                    <code className="text-[10px] text-seal-400/70">{step.skill}</code>
+                    <p className="text-xs font-medium text-white">{step.title}</p>
+                    <code className="text-[10px] text-acid/70">{step.skill}</code>
                   </div>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{step.detail}</p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-white/40">{step.detail}</p>
                   {state.note && (
-                    <p className="mt-1 flex items-center gap-2 font-mono text-[11px] text-clear-400">
+                    <p className="mt-1 flex items-center gap-2 font-mono text-[11px] text-acid">
                       {state.note}
                       {state.txHash && <TxLink hash={state.txHash} network={network} />}
                     </p>
@@ -260,8 +260,8 @@ export function JobComposer({
         {error && <ErrorNote message={error} onDismiss={() => setError(null)} />}
 
         {jobId !== null && (
-          <div className="rounded-lg border border-clear-500/40 bg-clear-500/10 px-4 py-3">
-            <p className="text-xs text-clear-400">
+          <div className="rounded-lg border border-acid/40 bg-acid/10 px-4 py-3">
+            <p className="text-xs text-acid">
               Job #{jobId} is escrowed. The node will decrypt the prompt, run it, and submit sealed
               proof of execution — the circuit decides the payout.
             </p>
@@ -270,7 +270,7 @@ export function JobComposer({
 
         <button
           type="button"
-          className="btn-primary w-full"
+          className="btn-lg btn-acid w-full"
           onClick={() => void run()}
           disabled={!ready || busy}
           title={disabledReason ?? undefined}
@@ -281,7 +281,7 @@ export function JobComposer({
         </button>
 
         {disabledReason && !busy && (
-          <p className="text-center text-[11px] text-slate-500">{disabledReason}</p>
+          <p className="text-center text-[11px] text-white/40">{disabledReason}</p>
         )}
       </div>
     </Panel>

@@ -27,17 +27,23 @@ export default function Dashboard() {
     <>
       <Header />
 
-      <main className="mx-auto max-w-7xl px-6 py-6">
-        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
+      <main className="shell py-8">
+        <div className="mb-7 flex flex-col gap-5 border-b border-void-600 pb-7 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-slate-100">Console</h1>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Hire compute, settle in ciphertext, and decrypt your own values locally.
+            <p className="eyebrow mb-4 flex items-center gap-3">
+              <span className="text-acid">00</span>
+              <span className="h-px w-8 bg-void-500" />
+              {network.name}
+            </p>
+            <h1 className="display-md">Console</h1>
+            <p className="muted mt-3 max-w-lg">
+              Hire compute, settle in ciphertext, and decrypt your own values locally. Nothing on
+              this page is read by a server — there isn&apos;t one.
             </p>
           </div>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition-colors hover:text-slate-300"
+            className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-label text-white/45 transition-colors hover:text-acid"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             How Nodea works
@@ -50,21 +56,21 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
+        <div className="grid gap-3 lg:grid-cols-3">
+          <div className="space-y-3 lg:col-span-2">
             <FleetTable selectedNodeId={selectedNodeId} onSelect={setSelectedNodeId} />
             <JobsPanel refreshKey={refreshKey} />
             <CertificatePanel refreshKey={refreshKey} />
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <SessionPanel onChanged={bump} />
             <JobComposer node={selectedNode} onJobOpened={bump} />
           </div>
         </div>
 
-        <footer className="mt-10 border-t border-ink-800/70 pt-6 text-xs text-slate-600">
-          <p>
+        <footer className="mt-12 border-t border-void-600 pt-7">
+          <p className="muted">
             Nodea · Apache-2.0 · running on {network.name}. Contracts, SDK and the autonomous agent
             runtime are in the repository.
           </p>

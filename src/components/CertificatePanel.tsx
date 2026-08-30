@@ -32,7 +32,7 @@ export function CertificatePanel({ refreshKey }: { refreshKey: number }) {
       actions={
         <button
           type="button"
-          className="btn-ghost !px-2.5 !py-1.5 text-xs"
+          className="btn-sm btn-outline"
           onClick={() => void refresh()}
           disabled={loading}
           aria-label="Refresh certificates"
@@ -87,42 +87,42 @@ function CertificateCard({ certificate }: { certificate: SlaCertificate }) {
   }
 
   return (
-    <article className="rounded-lg border border-ink-700/60 bg-ink-850/40 p-4">
+    <article className="rounded-lg border border-void-600 bg-void-850 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <Award
-            className={`h-4 w-4 ${certificate.slaMet ? "text-clear-400" : "text-breach-400"}`}
+            className={`h-4 w-4 ${certificate.slaMet ? "text-acid" : "text-alert"}`}
           />
           <div>
-            <p className="text-sm font-medium text-slate-200">Certificate #{certificate.tokenId}</p>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-sm font-medium text-white">Certificate #{certificate.tokenId}</p>
+            <p className="text-[11px] text-white/40">
               job #{certificate.jobId} · {new Date(certificate.issuedAt * 1000).toLocaleDateString()}
             </p>
           </div>
         </div>
         {certificate.slaMet ? (
-          <Badge tone="clear">SLA met</Badge>
+          <Badge tone="acid">SLA met</Badge>
         ) : (
-          <Badge tone="breach">breached</Badge>
+          <Badge tone="alert">breached</Badge>
         )}
       </div>
 
       <dl className="mt-3 space-y-1 text-[11px]">
         <div className="flex justify-between">
-          <dt className="text-slate-500">Promised uptime</dt>
-          <dd className="font-mono text-slate-300">{(certificate.promisedUptimeBps / 100).toFixed(2)}%</dd>
+          <dt className="text-white/40">Promised uptime</dt>
+          <dd className="font-mono text-white/70">{(certificate.promisedUptimeBps / 100).toFixed(2)}%</dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="shrink-0 text-slate-500">Attestation</dt>
-          <dd className="truncate font-mono text-slate-400">{certificate.attestationDigest}</dd>
+          <dt className="shrink-0 text-white/40">Attestation</dt>
+          <dd className="truncate font-mono text-white/45">{certificate.attestationDigest}</dd>
         </div>
       </dl>
 
-      <div className="mt-3 border-t border-ink-700/60 pt-3">
+      <div className="mt-3 border-t border-void-600 pt-3">
         {state === "idle" && (
           <button
             type="button"
-            className="btn-ghost w-full !py-1.5 text-xs"
+            className="btn-sm btn-outline w-full"
             onClick={() => void reveal()}
             disabled={status !== "ready"}
             title={status === "ready" ? undefined : "Derive your AES key to decrypt"}
@@ -132,20 +132,20 @@ function CertificateCard({ certificate }: { certificate: SlaCertificate }) {
         )}
 
         {state === "loading" && (
-          <p className="flex items-center justify-center gap-2 py-1.5 text-xs text-slate-400">
+          <p className="flex items-center justify-center gap-2 py-1.5 text-xs text-white/45">
             <Spinner className="h-3.5 w-3.5" /> decrypting…
           </p>
         )}
 
         {state === "sealed" && (
-          <p className="py-1.5 text-center text-xs text-slate-600">
+          <p className="py-1.5 text-center text-xs text-white/25">
             Sealed to you — only the owning operator can read this manifest.
           </p>
         )}
 
         {state === "done" && manifest && (
           <dl className="space-y-1 text-[11px]">
-            <p className="label mb-1.5">Decrypted manifest</p>
+            <p className="eyebrow mb-2">Decrypted manifest</p>
             <Row label="Model" value={manifest.model} />
             <Row label="Tokens generated" value={manifest.tokens.toLocaleString()} />
             <Row label="Measured uptime" value={`${(manifest.uptimeBps / 100).toFixed(2)}%`} />
@@ -160,8 +160,8 @@ function CertificateCard({ certificate }: { certificate: SlaCertificate }) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-3">
-      <dt className="shrink-0 text-slate-500">{label}</dt>
-      <dd className="truncate font-mono text-clear-400">{value}</dd>
+      <dt className="shrink-0 text-white/40">{label}</dt>
+      <dd className="truncate font-mono text-acid">{value}</dd>
     </div>
   )
 }

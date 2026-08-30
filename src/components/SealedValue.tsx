@@ -51,13 +51,13 @@ export function SealedValue({
   }
 
   return (
-    <div className="rounded-lg border border-ink-700/60 bg-ink-850/40 px-3 py-2.5">
+    <div className="rounded-xl border border-void-600 bg-void-950 px-4 py-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="label">{label}</p>
+        <p className="eyebrow">{label}</p>
         {state === "idle" && (
           <button
             type="button"
-            className="inline-flex items-center gap-1 text-[11px] text-seal-400 hover:text-seal-400/80 disabled:opacity-40"
+            className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-label text-acid transition-colors hover:text-acid-400 disabled:opacity-35"
             onClick={reveal}
             disabled={disabled}
             title={disabled ? disabledHint : "Decrypt locally with your AES key"}
@@ -66,18 +66,18 @@ export function SealedValue({
             decrypt
           </button>
         )}
-        {state === "loading" && <Spinner className="h-3 w-3 text-seal-400" />}
+        {state === "loading" && <Spinner className="h-3 w-3 text-acid" />}
       </div>
 
       {state === "idle" && (
-        <p className="mt-1 flex items-center gap-1.5 font-mono text-sm text-seal-400/60">
+        <p className="mt-1.5 flex items-center gap-1.5 font-mono text-sm text-white/25">
           <Lock className="h-3 w-3" />
           sealed
         </p>
       )}
 
       {state === "sealed" && (
-        <p className="mt-1 flex items-center gap-1.5 font-mono text-xs text-slate-600">
+        <p className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-white/25">
           <Lock className="h-3 w-3" />
           sealed to you
         </p>
@@ -85,9 +85,9 @@ export function SealedValue({
 
       {state === "revealed" && (
         <>
-          <p className="mt-1 font-mono text-sm text-clear-400">{plaintext}</p>
+          <p className="plaintext mt-1.5 text-base">{plaintext}</p>
           {ciphertext && (
-            <p className="scroll-x mt-1 whitespace-nowrap font-mono text-[10px] text-slate-600">
+            <p className="scroll-x mt-1.5 whitespace-nowrap font-mono text-[10px] text-white/20">
               on chain: {ciphertext}
             </p>
           )}

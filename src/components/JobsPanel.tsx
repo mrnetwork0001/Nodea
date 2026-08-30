@@ -37,7 +37,7 @@ export function JobsPanel({ refreshKey }: { refreshKey: number }) {
       actions={
         <button
           type="button"
-          className="btn-ghost !px-2.5 !py-1.5 text-xs"
+          className="btn-sm btn-outline"
           onClick={() => void refresh()}
           disabled={loading}
           aria-label="Refresh jobs"
@@ -99,22 +99,22 @@ function JobRow({
   const settled = job.state === "Settled"
 
   return (
-    <li className="border-b border-ink-800/60 last:border-0">
+    <li className="border-b border-void-600 last:border-0">
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-ink-850/40"
+        className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-void-850"
       >
-        <span className="font-mono text-xs text-slate-500">#{job.id}</span>
+        <span className="font-mono text-xs text-white/40">#{job.id}</span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-slate-200">
+          <p className="text-sm text-white">
             node #{job.nodeId}
-            <span className="ml-2 text-xs text-slate-500">
+            <span className="ml-2 text-xs text-white/40">
               opened {new Date(job.openedAt * 1000).toLocaleString()}
             </span>
           </p>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-white/40">
             prompt message #{job.promptMessageId}
             {job.certificateId > 0 && ` · SLA certificate #${job.certificateId}`}
           </p>
@@ -123,15 +123,15 @@ function JobRow({
         {job.state === "Escrowed" && <Badge tone="warn">escrowed</Badge>}
         {job.state === "Refunded" && <Badge tone="muted">reclaimed</Badge>}
         {settled &&
-          (job.slaMet ? <Badge tone="clear">SLA met</Badge> : <Badge tone="breach">SLA breached</Badge>)}
+          (job.slaMet ? <Badge tone="acid">SLA met</Badge> : <Badge tone="alert">SLA breached</Badge>)}
 
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${expanded ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 text-white/40 transition-transform ${expanded ? "rotate-180" : ""}`}
         />
       </button>
 
       {expanded && (
-        <div className="space-y-3 border-t border-ink-800/60 bg-ink-950/40 px-5 py-4">
+        <div className="space-y-3 border-t border-void-600 bg-void-950 px-5 py-4">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <SealedValue
               label="Workload ordered"
@@ -158,9 +158,9 @@ function JobRow({
               disabled={!canDecrypt}
               fetcher={sealed("jobRefundFor", (value) => `${formatCredits(value)} NDC`)}
             />
-            <div className="rounded-lg border border-ink-700/60 bg-ink-850/40 px-3 py-2.5">
-              <p className="label">Attestation digest</p>
-              <p className="scroll-x mt-1 whitespace-nowrap font-mono text-xs text-slate-400">
+            <div className="rounded-lg border border-void-600 bg-void-850 px-3 py-2.5">
+              <p className="eyebrow">Attestation digest</p>
+              <p className="scroll-x mt-1 whitespace-nowrap font-mono text-xs text-white/45">
                 {job.attestationDigest === "0x" + "0".repeat(64)
                   ? "awaiting proof of execution"
                   : job.attestationDigest}
@@ -196,15 +196,15 @@ function ReclaimNotice({ job }: { job: JobRecord }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ink-700/60 bg-ink-850/30 px-4 py-3">
-      <p className="text-[11px] text-slate-500">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-void-600 bg-void-850 px-4 py-3">
+      <p className="text-[11px] text-white/40">
         {expired
           ? "The deadline has passed with no proof of execution. Your escrow is reclaimable."
           : `Escrow is protected until ${new Date(job.deadline * 1000).toLocaleString()}, after which you can reclaim it.`}
       </p>
       <button
         type="button"
-        className="btn-ghost !px-3 !py-1.5 text-xs"
+        className="btn-sm btn-outline"
         onClick={() => void reclaim()}
         disabled={!expired || busy}
       >

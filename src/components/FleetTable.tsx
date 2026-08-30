@@ -32,7 +32,7 @@ export function FleetTable({
       actions={
         <button
           type="button"
-          className="btn-ghost !px-2.5 !py-1.5 text-xs"
+          className="btn-sm btn-outline"
           onClick={() => void refresh()}
           disabled={loading}
           aria-label="Refresh fleet"
@@ -58,13 +58,13 @@ export function FleetTable({
         <div className="scroll-x">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
-              <tr className="border-b border-ink-800 text-left">
-                <th className="label px-5 py-2.5 font-medium">Node</th>
-                <th className="label px-3 py-2.5 font-medium">Hardware</th>
-                <th className="label px-3 py-2.5 font-medium">SLA promise</th>
-                <th className="label px-3 py-2.5 font-medium">Record</th>
-                <th className="label px-3 py-2.5 font-medium">Rate card</th>
-                <th className="label px-5 py-2.5 font-medium" />
+              <tr className="border-b border-void-600 text-left">
+                <th className="eyebrow px-5 py-3 font-medium">Node</th>
+                <th className="eyebrow px-3 py-3 font-medium">Hardware</th>
+                <th className="eyebrow px-3 py-3 font-medium">SLA promise</th>
+                <th className="eyebrow px-3 py-3 font-medium">Record</th>
+                <th className="eyebrow px-3 py-3 font-medium">Rate card</th>
+                <th className="eyebrow px-5 py-3 font-medium" />
               </tr>
             </thead>
             <tbody>
@@ -75,41 +75,41 @@ export function FleetTable({
                 return (
                   <tr
                     key={node.id}
-                    className={`border-b border-ink-800/60 transition-colors last:border-0 ${
-                      selected ? "bg-seal-500/10" : "hover:bg-ink-850/50"
+                    className={`border-b border-void-600 transition-colors last:border-0 ${
+                      selected ? "bg-acid/10" : "hover:bg-void-850"
                     }`}
                   >
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2.5">
-                        <Cpu className="h-4 w-4 shrink-0 text-seal-400/70" />
+                        <Cpu className="h-4 w-4 shrink-0 text-acid/70" />
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-slate-200">{node.modelId}</p>
+                          <p className="truncate font-medium text-white">{node.modelId}</p>
                           <Address value={node.operator} network={network} />
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <p className="text-slate-300">{node.gpuClass}</p>
-                      <p className="text-xs text-slate-500">{node.region}</p>
+                      <p className="text-white/70">{node.gpuClass}</p>
+                      <p className="text-xs text-white/40">{node.region}</p>
                     </td>
-                    <td className="px-3 py-3 text-slate-300">
+                    <td className="px-3 py-3 text-white/70">
                       <p>{(node.promisedUptimeBps / 100).toFixed(2)}% uptime</p>
-                      <p className="text-xs text-slate-500">&lt;{node.promisedLatencyMs}ms TTFT</p>
+                      <p className="text-xs text-white/40">&lt;{node.promisedLatencyMs}ms TTFT</p>
                     </td>
                     <td className="px-3 py-3">
                       {total === 0 ? (
-                        <span className="text-xs text-slate-500">unproven</span>
+                        <span className="text-xs text-white/40">unproven</span>
                       ) : (
                         <>
-                          <p className="text-slate-300">{(reliability(node) * 100).toFixed(0)}%</p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-white/70">{(reliability(node) * 100).toFixed(0)}%</p>
+                          <p className="text-xs text-white/40">
                             {node.jobsSettled} met · {node.jobsBreached} breached
                           </p>
                         </>
                       )}
                     </td>
                     <td className="px-3 py-3">
-                      <span className="inline-flex items-center gap-1.5 font-mono text-xs text-seal-400/60">
+                      <span className="inline-flex items-center gap-1.5 font-mono text-xs text-white/25">
                         <Lock className="h-3 w-3" />
                         encrypted
                       </span>
@@ -118,7 +118,7 @@ export function FleetTable({
                       {node.active ? (
                         <button
                           type="button"
-                          className={selected ? "btn-clear !px-3 !py-1.5 text-xs" : "btn-ghost !px-3 !py-1.5 text-xs"}
+                          className={selected ? "btn-sm btn-acid" : "btn-sm btn-outline"}
                           onClick={() => onSelect(node.id)}
                         >
                           {selected ? "selected" : "hire"}
