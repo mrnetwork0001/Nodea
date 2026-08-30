@@ -8,14 +8,14 @@
  * ciphertext this browser has no key for. After onboarding, the same call returns the same bytes
  * and they resolve to a number. Nothing about the chain changed; the reader did.
  */
-import { Cpu, Droplets, KeyRound, Plug, Wallet as WalletIcon } from "lucide-react"
+import { AlertTriangle, Cpu, Droplets, Eye, EyeOff, KeyRound, Plug, Wallet as WalletIcon } from "lucide-react"
 import { useState } from "react"
 import { ethers } from "@coti-io/coti-ethers"
 import { formatCredits } from "@/lib/nodea/config"
 import * as credits from "@/lib/nodea/credits"
 import { useCreditBalance } from "@/lib/useNodea"
 import { useWallet, type SignerMode } from "@/lib/wallet"
-import { Address, ErrorNote, Panel, Spinner } from "./ui"
+import { Address, CopyButton, ErrorNote, Panel, Spinner } from "./ui"
 
 /** Enough to onboard, claim credits and run several jobs. */
 const DEFAULT_FUNDING = "0.3"
@@ -355,6 +355,8 @@ function AgentIdentity() {
         )}
       </div>
 
+      {funded && <BackupKey privateKey={agent.privateKey} />}
+
       {!funded && (
         <div className="mt-3 space-y-2 border-t border-acid/20 pt-3">
           <p className="text-[10px] leading-relaxed text-white/40">
@@ -381,6 +383,69 @@ function AgentIdentity() {
             arrive here.
           </p>
         </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Back up the agent key.
+ *
+ * This exists because the identity lives in `localStorage` and nowhere else. It survives a
+ * reload, a closed tab and a restarted browser - but not cleared site data, a different browser,
+ * or a private window that ends. Once the agent holds funds, the key is the only way back to
+ * them, and there is no recovery path we could offer instead.
+ *
+ * Revealing it is behind a click and a warning rather than shown by default, because the most
+ * likely moment someone opens this panel is while screen-sharing or recording a demo.
+ */
+function BackupKey({ privateKey }: { privateKey: string }) {
+  const [revealed, setRevealed] = useState(false)
+
+  return (
+    <div className="mt-3 border-t border-acid/20 pt-3">
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/40" />
+        <p className="text-[10px] leading-relaxed text-white/40">
+          This key lives only in this browser. It survives a reload, but clearing site data or
+          switching browser loses it - and the funds with it. Back it up.
+        </p>
+      </div>
+
+      {revealed ? (
+        <div className="mt-2 space-y-2">
+          <div className="flex items-center gap-2 rounded-lg border border-alert/40 bg-alert/10 px-3 py-2">
+            <code className="scroll-x min-w-0 flex-1 whitespace-nowrap font-mono text-[10px] text-alert">
+              {privateKey}
+            </code>
+            <CopyButton value={privateKey} />
+          </div>
+          <button
+            type="button"
+            className="btn-sm btn-outline w-full"
+            onClick={() => setRevealed(false)}
+          >
+            <EyeOff className="h-3.5 w-3.5" />
+            Hide
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="btn-sm btn-outline mt-2 w-full"
+          onClick={() => {
+            if (
+              window.confirm(
+                "Reveal the agent private key on screen?\n\nAnyone who sees or records it controls this agent and its funds. Do not do this while screen-sharing.",
+              )
+            ) {
+              setRevealed(true)
+            }
+          }}
+        >
+          <Eye className="h-3.5 w-3.5" />
+          Reveal key to back up
+        </button>
       )}
     </div>
   )

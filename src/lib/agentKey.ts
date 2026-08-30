@@ -72,16 +72,21 @@ export function importAgent(chainId: number, privateKey: string): AgentIdentity 
  *
  * Deliberately destructive and deliberately warned about in the UI: any COTI or NDC still held by
  * this address becomes unreachable unless the key was exported first.
+ *
+ * Takes the address because the AES key is cached per address, not per chain. Clearing only the
+ * chain-scoped entry would leave the derived key orphaned in storage forever - harmless, but the
+ * kind of residue that turns into a support question when a later identity reuses the address.
  */
-export function clearAgent(chainId: number): void {
+export function clearAgent(chainId: number, address?: string): void {
   if (typeof window === "undefined") return
 
   try {
     window.localStorage.removeItem(storageKey(chainId))
-    // The AES key is derived per address, so it is dead weight once the identity is gone.
-    window.localStorage.removeItem(`nodea:aes:${chainId}`)
+    if (address) {
+      window.localStorage.removeItem(`nodea:aes:${chainId}:${address.toLowerCase()}`)
+    }
   } catch {
-    /* blocked storage — nothing useful to do */
+    /* blocked storage - nothing useful to do */
   }
 }
 

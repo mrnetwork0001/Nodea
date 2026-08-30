@@ -334,7 +334,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
     },
     forgetAgentIdentity: () => {
-      clearAgent(network.chainId)
+      clearAgent(network.chainId, agent?.address)
       adoptAgent(null)
     },
     fundAgent,
