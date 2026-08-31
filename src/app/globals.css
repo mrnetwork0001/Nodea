@@ -154,9 +154,11 @@ body {
   @apply rounded-full bg-void-500;
 }
 
-/* Reduced motion: the marquee is decorative, so it simply stops. */
+/* Reduced motion: the marquee and the hero card's pulse are decorative, so they simply stop.
+   The card's ciphertext scrambling is stopped in the component, which checks the same query. */
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
+  .animate-marquee,
+  .animate-ping {
     animation: none !important;
   }
 
