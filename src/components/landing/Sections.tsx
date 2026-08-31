@@ -6,6 +6,7 @@
  * with what the code actually does.
  */
 import Link from "next/link"
+import { Wordmark } from "@/components/Wordmark"
 import {
   ArrowUpRight,
   Award,
@@ -695,10 +696,13 @@ export function LandingFooter() {
   return (
     <footer className="border-t border-void-600 pt-14">
       <div className="flex flex-col gap-5 pb-12 sm:flex-row sm:items-center sm:justify-between">
-        <p className="muted max-w-md">
-          Nodea · Apache-2.0 · built on COTI. A met SLA pays the escrow in full; a breach withholds{" "}
-          {SLA_SLASH_BPS / 100}% and returns it to the agent - both amounts encrypted.
-        </p>
+        <div className="max-w-md space-y-4">
+          <Wordmark className="h-8 w-auto" />
+          <p className="muted">
+            Apache-2.0 · built on COTI. A met SLA pays the escrow in full; a breach withholds{" "}
+            {SLA_SLASH_BPS / 100}% and returns it to the agent - both amounts encrypted.
+          </p>
+        </div>
         <div className="flex items-center gap-6">
           <a
             className="font-mono text-[10px] uppercase tracking-label text-white/45 hover:text-acid"
