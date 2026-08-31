@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowUpRight, Terminal } from "lucide-react"
 import { LandingNav } from "@/components/landing/LandingNav"
+import { HeroReceipt } from "@/components/landing/HeroReceipt"
 import { LedgerCompare } from "@/components/landing/LedgerCompare"
 import {
   Audiences,
@@ -44,14 +45,21 @@ export default function Landing() {
 
       <main>
         {/* ---- hero ---- */}
-        <section className="shell pb-14 pt-16 sm:pt-24">
-          <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-4xl">
+        {/*
+          Two columns: the claim in words on the left, the same claim as evidence on the right.
+          The headline descends white -> grey -> acid so the sentence lands on the phrase that
+          carries the problem, and it is sentence case rather than the page's usual all-caps -
+          a hero is read as a sentence, and 90 characters of uppercase is read as a wall.
+        */}
+        <section className="shell pb-14 pt-16 sm:pt-20">
+          <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.95fr] lg:gap-16">
+            <div>
               <p className="eyebrow mb-7 flex items-center gap-3">
                 <span className="text-acid">00</span>
                 <span className="h-px w-8 bg-void-500" />
                 Private settlement on COTI · real GPU on 0G
               </p>
+
               <h1 className="display-xl">
                 AI agents buy GPU compute
                 <br />
@@ -59,19 +67,14 @@ export default function Landing() {
                 <br />
                 what they bought.
               </h1>
-            </div>
 
-            {/* `shrink-0` only belongs in the lg row layout. Applied at every width it pins this
-                column to max-w-sm (384px), which is wider than a 390px viewport minus the shell's
-                padding - so the page overflowed horizontally, clipping the hero and pushing the
-                header's own contents off-screen with it. */}
-            <div className="w-full max-w-sm lg:shrink-0">
-              <p className="lede">
+              <p className="lede mt-8 max-w-xl">
                 Nodea is an encrypted compute marketplace built natively on COTI. Agents hire GPU
                 nodes, transmit prompts and settle micro-payments - with the prompt, the rate card,
                 the budget and every balance held as garbled ciphertext, on chain, permanently.
               </p>
-              <div className="mt-7 flex flex-wrap gap-3">
+
+              <div className="mt-9 flex flex-wrap gap-3">
                 <Link href="/app" className="btn-lg btn-acid">
                   Launch app
                   <ArrowUpRight className="h-4 w-4" />
@@ -87,6 +90,8 @@ export default function Landing() {
                 </a>
               </div>
             </div>
+
+            <HeroReceipt />
           </div>
         </section>
 
