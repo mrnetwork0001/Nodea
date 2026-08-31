@@ -49,11 +49,15 @@ older Node, do not change the system default. Either install Node 22 alongside a
 ### Install
 
 ```bash
-# Dedicated user that owns nothing else and cannot log in.
-sudo useradd --system --create-home --home-dir /opt/nodea --shell /usr/sbin/nologin nodea
+# Dedicated user and group that own nothing else and cannot log in.
+sudo groupadd --system nodea
+sudo useradd --system --gid nodea --home-dir /opt/nodea --shell /usr/sbin/nologin nodea
 
+# Note: no --create-home. useradd would populate the directory from /etc/skel, and `git clone`
+# refuses a destination that is not empty. Make it empty and owned, then clone into it.
+sudo install -d -o nodea -g nodea -m 755 /opt/nodea
 sudo -u nodea git clone https://github.com/mrnetwork0001/Nodea.git /opt/nodea
-cd /opt/nodea && sudo -u nodea npm ci
+sudo -H -u nodea npm --prefix /opt/nodea ci
 ```
 
 ### Keys, kept outside the checkout

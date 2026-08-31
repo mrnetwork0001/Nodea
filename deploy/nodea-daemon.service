@@ -54,8 +54,11 @@ RestrictSUIDSGID=true
 RestrictRealtime=true
 RestrictNamespaces=true
 LockPersonality=true
-# ProtectSystem=strict makes everything read-only; the daemon writes nothing but logs.
-ReadWritePaths=
+# ProtectSystem=strict makes the whole filesystem read-only. The daemon itself writes nothing but
+# logs, and PrivateTmp gives it a private /tmp for anything transient. The one exception is the
+# transpiler's cache: the leading `-` means "allow if it exists, do not refuse to start if it does
+# not", so a cache write can never turn into a boot loop on a machine hosting other services.
+ReadWritePaths=-/opt/nodea/node_modules/.cache
 
 StandardOutput=journal
 StandardError=journal
