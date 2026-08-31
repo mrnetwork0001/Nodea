@@ -41,6 +41,14 @@ export interface RouterCompletion {
   model: string
   promptTokens: number
   completionTokens: number
+  /**
+   * Milliseconds to the first chunk of the response.
+   *
+   * This, not total generation time, is what a latency SLA can fairly be judged on. Total time
+   * grows with how much the agent ordered, so a node promising 8s would pass on a short answer and
+   * fail on a long one having done nothing wrong. First-chunk latency is a property of the service.
+   */
+  ttftMs: number
 }
 
 export function routerBaseUrl(): string {
@@ -121,7 +129,12 @@ export async function runRouterInference(
   if (!key) throw new Error("ZEROG_ROUTER_KEY is not set")
 
   const anthropic = !formats.includes("openai") && formats.includes("anthropic")
+  const started = Date.now()
 
+  // Streamed, purely so first-chunk latency can be measured. Both wire formats still report token
+  // usage in their terminal event - OpenAI needs to be asked for it, Anthropic sends it anyway -
+  // and those counts are what the SLA circuit judges delivered volume on, so losing them is not an
+  // option.
   const response = await fetch(`${routerBaseUrl()}${anthropic ? "/messages" : "/chat/completions"}`, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
@@ -129,13 +142,15 @@ export async function runRouterInference(
       anthropic
         ? {
             model,
-            // Required by the Anthropic format, unlike OpenAI's where it is optional.
             max_tokens: maxTokens ?? 1_024,
+            stream: true,
             messages: [{ role: "user", content: prompt }],
           }
         : {
             model,
             messages: [{ role: "user", content: prompt }],
+            stream: true,
+            stream_options: { include_usage: true },
             ...(maxTokens ? { max_tokens: maxTokens } : {}),
           },
     ),
@@ -155,9 +170,61 @@ export async function runRouterInference(
     throw new Error(`0G Router ${response.status}${hint}: ${detail.slice(0, 200)}`)
   }
 
-  const body = (await response.json()) as {
+  // A model that ignores `stream` and answers in one JSON body still has to work. Falling back
+  // keeps a non-streaming model serving rather than failing, at the cost of a latency figure that
+  // is really total time - flagged by ttftMs equalling the total.
+  if (!(response.headers.get("content-type") ?? "").includes("event-stream")) {
+    return { ...parseWhole(await response.json(), model, anthropic), ttftMs: Date.now() - started }
+  }
+
+  let ttftMs = 0
+  let content = ""
+  let promptTokens = 0
+  let completionTokens = 0
+  let buffer = ""
+
+  const decoder = new TextDecoder()
+  for await (const part of response.body as unknown as AsyncIterable<Uint8Array>) {
+    if (ttftMs === 0) ttftMs = Date.now() - started
+    buffer += decoder.decode(part, { stream: true })
+
+    // SSE frames arrive split across arbitrary chunk boundaries, so lines are drained only once
+    // a newline has actually been seen.
+    let newline: number
+    while ((newline = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, newline).trim()
+      buffer = buffer.slice(newline + 1)
+      if (!line.startsWith("data:")) continue
+
+      const payload = line.slice(5).trim()
+      if (payload === "[DONE]") continue
+
+      try {
+        const event = JSON.parse(payload)
+        if (anthropic) {
+          if (event.delta?.text) content += event.delta.text
+          const usage = event.usage ?? event.message?.usage
+          if (usage?.input_tokens) promptTokens = usage.input_tokens
+          if (usage?.output_tokens) completionTokens = usage.output_tokens
+        } else {
+          const delta = event.choices?.[0]?.delta?.content
+          if (delta) content += delta
+          if (event.usage?.prompt_tokens) promptTokens = event.usage.prompt_tokens
+          if (event.usage?.completion_tokens) completionTokens = event.usage.completion_tokens
+        }
+      } catch {
+        // A frame that will not parse is not worth failing a paid job over.
+      }
+    }
+  }
+
+  return { content, model, promptTokens, completionTokens, ttftMs }
+}
+
+/** The non-streaming shape, kept for a model that ignores `stream`. */
+function parseWhole(
+  body: {
     model?: string
-    // OpenAI shape
     choices?: Array<{ message?: { content?: string } }>
     usage?: {
       prompt_tokens?: number
@@ -165,10 +232,11 @@ export async function runRouterInference(
       input_tokens?: number
       output_tokens?: number
     }
-    // Anthropic shape
     content?: Array<{ type?: string; text?: string }>
-  }
-
+  },
+  model: string,
+  anthropic: boolean,
+): Omit<RouterCompletion, "ttftMs"> {
   const content = anthropic
     ? (body.content ?? [])
         .filter((block) => block.type === "text" || block.text)

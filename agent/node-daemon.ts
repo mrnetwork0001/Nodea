@@ -181,8 +181,9 @@ async function serve(
     )
   }
   console.log(
-    `     served   ${result.deliveredTokens} tokens, ${result.latencyMs}ms TTFT, ` +
-      `${result.uptimeBps / 100}% uptime  [${result.backend}]`,
+    `     served   ${result.deliveredTokens} tokens, ${result.latencyMs}ms to first chunk, ` +
+      `${result.uptimeBps / 100}% uptime  [${result.backend}]` +
+      (result.totalMs ? `  (${(result.totalMs / 1000).toFixed(1)}s total)` : ""),
   )
 
   // Delivered volume is compared in-circuit against what the agent ordered, and a real model stops

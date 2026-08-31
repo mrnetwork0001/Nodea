@@ -43,6 +43,8 @@ export interface InferenceResult {
   deliveredTokens: bigint
   /** Measured time to first token. */
   latencyMs: number
+  /** Whole-answer time. Reported for the operator, never judged - see `latencyMs`. */
+  totalMs?: number
   /** Measured uptime over the job window, in basis points. */
   uptimeBps: number
   /** Which backend produced this, for the daemon's log and the operator's own records. */
@@ -115,7 +117,7 @@ async function runOnRouter(prompt: string, options: InferenceOptions): Promise<I
   const model = resolveRouterModel(options.model, catalog)
   const formats = catalog.find((entry) => entry.id === model)?.formats ?? ["openai"]
 
-  const started = Date.now()
+  const total = Date.now()
   const result = await runRouterInference(
     prompt,
     model,
@@ -125,12 +127,27 @@ async function runOnRouter(prompt: string, options: InferenceOptions): Promise<I
       : outputCeiling(options.orderedTokens),
     formats,
   )
-  const latencyMs = Date.now() - started
+
+  /**
+   * The SLA is judged on first-chunk latency, not on how long the whole answer took.
+   *
+   * Total generation time grows with how much the agent ordered, so measuring that against a
+   * fixed `promisedLatencyMs` meant a node passed on a short answer and failed on a long one
+   * having done nothing wrong - the more work you bought, the more certain the breach. It cost
+   * node 8 a permanent breach on a job it served correctly: 36s of honest generation against an
+   * 8s promise, where its first chunk had arrived in under 5.
+   *
+   * First-chunk latency is a property of the service rather than of the order size, which is the
+   * only thing a fixed promise can fairly be held to.
+   */
+  const latencyMs = result.ttftMs
+  const totalMs = Date.now() - total
 
   return {
     completion: result.content,
     deliveredTokens: BigInt(result.completionTokens),
     latencyMs,
+    totalMs,
     // Real measurement is the point of using 0G at all, so uptime is the only figure still
     // self-reported here - see the oracle caveat in docs/PRIVACY.md.
     uptimeBps: options.degrade ? 8_500 : 9_970,
