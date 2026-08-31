@@ -60,18 +60,25 @@ export default function Landing() {
                 Private settlement on COTI · real GPU on 0G
               </p>
 
-              <h1 className="display-xl">
-                AI agents buy GPU compute
+              <h1 className="font-display text-[clamp(2.05rem,4.9vw,4.2rem)] font-bold leading-[1.04] tracking-tighter">
+                {/* The first two lines are deliberately the same length, which is what lets the type
+                    run this large without wrapping - and the white -> grey -> acid descent only reads
+                    as a descent if the breaks land exactly where they are set. */}
+                Public chains publish
                 <br />
-                without <span className="text-acid">publishing</span>
+                <span className="text-white/40">everything your agent</span>
                 <br />
-                what they bought.
+                <span className="text-acid">pays to think.</span>
               </h1>
 
               <p className="lede mt-8 max-w-xl">
-                Nodea is an encrypted compute marketplace built natively on COTI. Agents hire GPU
-                nodes, transmit prompts and settle micro-payments - with the prompt, the rate card,
-                the budget and every balance held as garbled ciphertext, on chain, permanently.
+                Nodea is an <strong className="font-semibold text-white">encrypted compute
+                marketplace</strong> on COTI. Agents hire GPU nodes, send prompts and settle
+                micro-payments with the prompt, the rate card, the budget and every balance held as{" "}
+                <strong className="font-semibold text-white">garbled ciphertext</strong> - on chain,
+                permanently. Two facts are published and nothing else:{" "}
+                <strong className="font-semibold text-white">that a job happened, and whether the
+                node kept its SLA.</strong>
               </p>
 
               <div className="mt-9 flex flex-wrap gap-3">
