@@ -22,6 +22,19 @@ import { runInference } from "./inference"
 
 const POLL_INTERVAL_MS = 6_000
 
+/**
+ * How many times to retry one job before abandoning it.
+ *
+ * A job can fail for reasons that will never resolve - a model the Router has dropped, a prompt
+ * that will not decrypt - and retrying those forever means never reaching the jobs behind them.
+ * After this many attempts the daemon gives up on that job and moves on. The escrow is not lost:
+ * the agent reclaims it once the deadline passes.
+ */
+const MAX_ATTEMPTS = 3
+
+/** Backoff after a failed poll, so a chain outage does not become a request flood. */
+const ERROR_BACKOFF_MS = 30_000
+
 const degrade = process.argv.includes("--degrade")
 const once = process.argv.includes("--once")
 
@@ -39,6 +52,7 @@ async function main() {
   console.log(`  watching the encrypted prompt channel at ${deployment.promptChannel}\n`)
 
   const handled = new Set<number>()
+  const attempts = new Map<number, number>()
 
   // Jobs already settled before this daemon started are not ours to redo.
   for (const nodeId of owned) {
@@ -49,22 +63,59 @@ async function main() {
   }
 
   for (;;) {
-    for (const nodeId of owned) {
-      for (const jobId of await compute.jobsOfNode(operator, deployment.compute, nodeId)) {
-        if (handled.has(jobId)) continue
+    // The whole sweep is guarded. An RPC blip while listing jobs is transient and must not take
+    // the process down - a node that stops answering while still advertising `active` accrues
+    // breaches, and every one of those is permanent in a public record.
+    try {
+      for (const nodeId of owned) {
+        for (const jobId of await compute.jobsOfNode(operator, deployment.compute, nodeId)) {
+          if (handled.has(jobId)) continue
 
-        const job = await compute.getJob(operator, deployment.compute, jobId)
-        if (job.state !== "Escrowed") {
-          handled.add(jobId)
-          continue
+          const job = await compute.getJob(operator, deployment.compute, jobId)
+          if (job.state !== "Escrowed") {
+            handled.add(jobId)
+            continue
+          }
+
+          try {
+            await serve(deployment, operator, job)
+            handled.add(jobId)
+            attempts.delete(jobId)
+
+            if (once) return
+          } catch (cause) {
+            const tries = (attempts.get(jobId) ?? 0) + 1
+            attempts.set(jobId, tries)
+
+            const reason = cause instanceof Error ? cause.message : String(cause)
+            console.error(`  job #${jobId} failed (${tries}/${MAX_ATTEMPTS}): ${reason.slice(0, 200)}`)
+
+            if (tries >= MAX_ATTEMPTS) {
+              handled.add(jobId)
+              console.error(
+                `  giving up on job #${jobId}. Its escrow is not lost - the agent reclaims it ` +
+                  `after the deadline, and this node takes the breach.`,
+              )
+            }
+            if (once) return
+          }
         }
-
-        await serve(deployment, operator, job)
-        handled.add(jobId)
-
-        if (once) return
       }
+    } catch (cause) {
+      const reason = cause instanceof Error ? cause.message : String(cause)
+      console.error(`  sweep failed: ${reason.slice(0, 200)} - retrying in ${ERROR_BACKOFF_MS / 1000}s`)
+      await sleep(ERROR_BACKOFF_MS)
+      continue
     }
+
+    // `--once` means one sweep, not "wait indefinitely for a first job". Previously it polled
+    // forever in silence when the queue was empty, which reads as a hang rather than as nothing
+    // to do - and it is the flag a smoke test reaches for.
+    if (once) {
+      console.log(`  no escrowed jobs on ${owned.length} node${owned.length === 1 ? "" : "s"}. Nothing to serve.\n`)
+      return
+    }
+
     await sleep(POLL_INTERVAL_MS)
   }
 }
