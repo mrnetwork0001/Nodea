@@ -38,6 +38,25 @@ const ERROR_BACKOFF_MS = 30_000
 const degrade = process.argv.includes("--degrade")
 const once = process.argv.includes("--once")
 
+/**
+ * Set by SIGTERM/SIGINT. Checked between jobs, never inside one.
+ *
+ * A job in flight is the worst possible moment to die. Between decrypting the prompt and landing
+ * `submitProof` the escrow is already held, so a process killed there leaves the job stranded until
+ * the agent reclaims it - and that expiry is a permanent, public SLA breach against the node. So a
+ * stop request lets the current job finish and takes effect before the next one starts.
+ *
+ * `systemctl restart` and `stop` both send SIGTERM and then wait TimeoutStopSec, which the unit
+ * sets generously enough for a settlement to complete.
+ */
+let stopping = false
+
+function requestStop(signal: string) {
+  if (stopping) return // a second Ctrl-C should not be read as "try harder"
+  stopping = true
+  console.log(`\n  ${signal} received. Finishing any job in flight, then stopping.`)
+}
+
 async function main() {
   const deployment = loadDeployment(networkKey())
 
@@ -51,6 +70,9 @@ async function main() {
   console.log(`\n  serving node ids ${owned.join(", ")}`)
   console.log(`  watching the encrypted prompt channel at ${deployment.promptChannel}\n`)
 
+  process.on("SIGTERM", () => requestStop("SIGTERM"))
+  process.on("SIGINT", () => requestStop("SIGINT"))
+
   const handled = new Set<number>()
   const attempts = new Map<number, number>()
 
@@ -63,6 +85,8 @@ async function main() {
   }
 
   for (;;) {
+    if (stopping) return
+
     // The whole sweep is guarded. An RPC blip while listing jobs is transient and must not take
     // the process down - a node that stops answering while still advertising `active` accrues
     // breaches, and every one of those is permanent in a public record.
@@ -76,6 +100,9 @@ async function main() {
             handled.add(jobId)
             continue
           }
+
+          // Checked before starting work, not during it.
+          if (stopping) return
 
           try {
             await serve(deployment, operator, job)
@@ -115,6 +142,8 @@ async function main() {
       console.log(`  no escrowed jobs on ${owned.length} node${owned.length === 1 ? "" : "s"}. Nothing to serve.\n`)
       return
     }
+
+    if (stopping) return
 
     await sleep(POLL_INTERVAL_MS)
   }
