@@ -16,7 +16,7 @@
 import type { ContractRunner, Provider } from "@coti-io/coti-ethers"
 import type { itString } from "@coti-io/coti-sdk-typescript"
 import { normalizeCtString, promptChannelContract, requireEvent } from "./contracts"
-import { MPC_GAS_MESSAGE, mpcGas } from "./gas"
+import { mpcMessageGas } from "./gas"
 import {
   PROMPT_BYTES_PER_CELL,
   PROMPT_BYTES_PER_CHUNK,
@@ -111,7 +111,7 @@ export async function sendPrompt(
   prompt: string,
   /** Called after each chunk is sealed, so a UI can count down the wallet popups. */
   onProgress?: (sealedCells: number, totalCells: number) => void,
-): Promise<{ messageId: number; txHash: string; chunks: number }> {
+): Promise<{ messageId: number; txHash: string; chunks: number; gasUsed: bigint; cells: number }> {
   const chunks = chunkPrompt(prompt)
   const totalCells = promptSignatureCount(prompt)
 
@@ -127,11 +127,16 @@ export async function sendPrompt(
   }
 
   const channel = promptChannelContract(channelAddress, signer as unknown as ContractRunner)
-  const tx = await channel.sendMultipartMessage(nodeOperator, encryptedChunks, mpcGas(MPC_GAS_MESSAGE))
+  const tx = await channel.sendMultipartMessage(
+    nodeOperator,
+    encryptedChunks,
+    // Scaled by cell count: a full-capacity message needs several times what a short one does.
+    mpcMessageGas(totalCells),
+  )
   const receipt = await tx.wait()
 
   const messageId = Number(requireEvent(channel, receipt, "MessageSent").messageId)
-  return { messageId, txHash: receipt.hash, chunks: chunks.length }
+  return { messageId, txHash: receipt.hash, chunks: chunks.length, gasUsed: receipt.gasUsed, cells: totalCells }
 }
 
 /**
@@ -202,10 +207,24 @@ function sanitize(value: string): string {
   return value.replace(/\|/g, "-").slice(0, 48)
 }
 
+/**
+ * Bytes per result message.
+ *
+ * Deliberately below the channel's 1,536-byte ceiling. A full message is 192 sealed cells, and at
+ * that size the gas a single transaction needs approaches what one COTI block can give. 1,024
+ * bytes is 128 cells, which sits comfortably inside the block limit with margin to spare.
+ *
+ * A prompt is whatever the agent typed and may still run to the full 1,536; a result is ours to
+ * split, so it is split where the arithmetic is safe rather than where the contract stops us. The
+ * cost is a few more transactions on a long answer, which is the cheaper failure by far - the
+ * alternative is a settlement that reverts after the GPU has already been paid for.
+ */
+const RESULT_MAX_BYTES = 1_024
+
 /** Bytes of actual completion that fit in one message after the envelope header. */
 function resultCapacity(jobId: number, parts: number, provenance: ResultProvenance): number {
   const header = `${RESULT_PREFIX}|${jobId}|${parts}|${parts}|${sanitize(provenance.backend)}|${sanitize(provenance.model)}|`
-  return PROMPT_MAX_BYTES - UTF8.encode(header).length
+  return RESULT_MAX_BYTES - UTF8.encode(header).length
 }
 
 /**
@@ -225,7 +244,7 @@ export async function sendResult(
   jobId: number,
   text: string,
   provenance: ResultProvenance,
-): Promise<{ messageIds: number[]; parts: number }> {
+): Promise<{ messageIds: number[]; parts: number; gasUsed: bigint; cells: number }> {
   const backend = sanitize(provenance.backend)
   const model = sanitize(provenance.model)
 
@@ -234,6 +253,8 @@ export async function sendResult(
   const parts = Math.max(1, Math.ceil(bytes.length / perPart))
 
   const messageIds: number[] = []
+  let gasUsed = 0n
+  let cells = 0
 
   for (let index = 0; index < parts; index++) {
     // Slice on code points, not bytes: a part split mid-character would decode to replacement
@@ -245,9 +266,11 @@ export async function sendResult(
 
     const sent = await sendPrompt(signer, channelAddress, client, envelope)
     messageIds.push(sent.messageId)
+    gasUsed += sent.gasUsed
+    cells += sent.cells
   }
 
-  return { messageIds, parts }
+  return { messageIds, parts, gasUsed, cells }
 }
 
 /** Take up to `maxBytes` of UTF-8 starting at byte `from`, without splitting a code point. */

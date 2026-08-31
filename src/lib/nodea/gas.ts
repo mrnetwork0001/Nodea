@@ -46,3 +46,28 @@ export const MPC_GAS_HEAVY = 60_000_000n
 export function mpcGas(limit: bigint = MPC_GAS_STANDARD): { gasLimit: bigint } {
   return { gasLimit: limit }
 }
+
+/**
+ * Gas for a private message, scaled by how many 8-byte cells it seals.
+ *
+ * A flat limit cannot work here. The same call seals anything from one cell to the contract's
+ * maximum of 192 (64 chunks x 3), and MPC cost is close to linear in that count - so a limit
+ * generous enough for a 76-character prompt is nowhere near enough for a full-capacity message.
+ * That is exactly how a 2,026-token answer failed: 192 cells against a flat 30,000,000 is ~156k
+ * per cell, and the transaction ran out of gas with an empty revert.
+ *
+ * The per-cell figure is deliberately generous. Unused gas is refunded, COTI's block limit is
+ * 120,000,000, and `eth_estimateGas` cannot be trusted for MPC code because the precompile
+ * short-circuits during estimation - so over-setting is free and under-setting burns the fee for
+ * nothing.
+ */
+const MPC_GAS_MESSAGE_BASE = 3_000_000n
+const MPC_GAS_PER_CELL = 550_000n
+
+/** Kept under COTI's 120,000,000 block limit with room for the rest of the block. */
+export const MPC_GAS_MESSAGE_MAX = 100_000_000n
+
+export function mpcMessageGas(cells: number): { gasLimit: bigint } {
+  const wanted = MPC_GAS_MESSAGE_BASE + BigInt(Math.max(1, cells)) * MPC_GAS_PER_CELL
+  return { gasLimit: wanted > MPC_GAS_MESSAGE_MAX ? MPC_GAS_MESSAGE_MAX : wanted }
+}

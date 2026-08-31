@@ -214,6 +214,12 @@ async function serve(
     `     returned ${result.completion.length} chars in ${returned.parts} sealed ` +
       `message${returned.parts === 1 ? "" : "s"} (#${returned.messageIds.join(", #")})`,
   )
+  // The measured per-cell cost. `eth_estimateGas` is useless for MPC, so the only honest source
+  // for the gas constants is a real settlement saying what it actually took.
+  console.log(
+    `     gas      ${returned.gasUsed} over ${returned.cells} cells ` +
+      `(${Math.round(Number(returned.gasUsed) / Math.max(1, returned.cells)).toLocaleString()} per cell)`,
+  )
 
   // 5. Attest and settle. The digest binds the receipt to this exact completion, so the
   //    certificate is evidence of *this* run rather than a generic claim of uptime.
