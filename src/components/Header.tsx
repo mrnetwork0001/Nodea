@@ -8,9 +8,10 @@
  * that reads as a row of badges. Below `md` it is five items competing for 350 pixels, so it
  * collapses behind a hamburger and becomes a stacked panel where each row can afford a label.
  *
- * The status the header exists to convey does not vanish when the panel closes: the dot beside the
- * mark stays visible and turns acid once an AES key is live, so the one thing worth knowing at a
- * glance still is.
+ * A status dot used to sit beside the mark, standing in for that panel while it was shut. The
+ * wordmark carries its own mark now, and two marks side by side read as a smudge rather than as a
+ * signal - so the dot is gone and AES key state lives in the badge row on desktop and one tap
+ * behind the hamburger on mobile.
  */
 import Link from "next/link"
 import { KeyRound, Plug } from "lucide-react"
@@ -86,12 +87,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-void-600 bg-void/85 backdrop-blur-md">
       <div className="shell flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
-          {/* Doubles as the collapsed status light, so "is my key live?" survives the collapse. */}
-          <span
-            className={`h-2.5 w-2.5 rounded-sm ${status === "ready" ? "bg-acid" : "bg-void-500"}`}
-            title={status === "ready" ? "AES key active" : "No AES key yet"}
-          />
+        <Link href="/" className="flex items-center" onClick={() => setOpen(false)}>
           <Wordmark className="h-7 w-auto" priority />
         </Link>
 
