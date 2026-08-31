@@ -37,11 +37,22 @@ ExecStart=/usr/bin/node /opt/nodea/node_modules/.bin/tsx /opt/nodea/agent/node-d
 Restart=always
 RestartSec=10
 
+# Long enough for a settlement in flight to land. The daemon stops accepting new jobs the moment
+# SIGTERM arrives and finishes the one it is on; killing it in between would strand the escrow and
+# cost that node a permanent SLA breach. Inference alone can take two minutes.
+TimeoutStopSec=180
+# node exits 143 on SIGTERM, which is a clean stop, not a failure. Without this every restart is
+# logged as `Failed with result 'exit-code'` and counts against the start limit.
+SuccessExitStatus=143 SIGTERM
+
 # --- ceilings, so a leak here cannot take the neighbours down -----------------
 MemoryMax=512M
 MemoryHigh=384M
 CPUQuota=50%
-TasksMax=64
+# 128, not 64: the TypeScript loader keeps an esbuild service alongside the daemon and the pair
+# sits around 31 threads at idle. 64 left almost no headroom for a spike, and hitting TasksMax
+# does not throttle - it fails the fork.
+TasksMax=128
 
 # --- confinement --------------------------------------------------------------
 NoNewPrivileges=true
