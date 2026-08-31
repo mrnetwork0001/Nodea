@@ -7,6 +7,7 @@ import { Header } from "@/components/Header"
 import { JobComposer } from "@/components/JobComposer"
 import { JobsPanel } from "@/components/JobsPanel"
 import { SessionPanel } from "@/components/SessionPanel"
+import { Wordmark } from "@/components/Wordmark"
 import { ErrorNote } from "@/components/ui"
 import { useFleet } from "@/lib/useNodea"
 import { useWallet } from "@/lib/wallet"
@@ -63,9 +64,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <footer className="mt-12 border-t border-void-600 pt-7">
+        <footer className="mt-12 space-y-4 border-t border-void-600 pt-7">
+          <Wordmark className="h-7 w-auto" />
           <p className="muted">
-            Nodea · Apache-2.0 · running on {network.name}. Contracts, SDK and the autonomous agent
+            Apache-2.0 · running on {network.name}. Contracts, SDK and the autonomous agent
             runtime are in the repository.
           </p>
         </footer>
