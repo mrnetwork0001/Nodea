@@ -16,6 +16,7 @@ import Link from "next/link"
 import { KeyRound, Plug } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useWallet } from "@/lib/wallet"
+import { Wordmark } from "@/components/Wordmark"
 import { Address, Badge, Spinner } from "./ui"
 
 export function Header() {
@@ -91,9 +92,7 @@ export function Header() {
             className={`h-2.5 w-2.5 rounded-sm ${status === "ready" ? "bg-acid" : "bg-void-500"}`}
             title={status === "ready" ? "AES key active" : "No AES key yet"}
           />
-          <span className="font-display text-lg font-extrabold uppercase tracking-tighter">
-            Nodea
-          </span>
+          <Wordmark className="h-7 w-auto" priority />
         </Link>
 
         <div className="hidden items-center gap-3 md:flex">
