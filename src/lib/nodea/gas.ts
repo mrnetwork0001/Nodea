@@ -56,10 +56,15 @@ export function mpcGas(limit: bigint = MPC_GAS_STANDARD): { gasLimit: bigint } {
  * That is exactly how a 2,026-token answer failed: 192 cells against a flat 30,000,000 is ~156k
  * per cell, and the transaction ran out of gas with an empty revert.
  *
- * The per-cell figure is deliberately generous. Unused gas is refunded, COTI's block limit is
- * 120,000,000, and `eth_estimateGas` cannot be trusted for MPC code because the precompile
- * short-circuits during estimation - so over-setting is free and under-setting burns the fee for
- * nothing.
+ * Measured, not guessed: job #13 on mainnet used 82,087,819 gas across 285 cells, or **288,027 per
+ * cell**. That number also settles the diagnosis above rather than leaving it a plausible story -
+ * 192 x 288,027 = 55.3M against the flat 30,000,000 that was in place when the answer reverted.
+ *
+ * 550,000 is kept as ~1.9x that measurement rather than trimmed to it. Unused gas is refunded,
+ * COTI's block limit is 120,000,000, and `eth_estimateGas` cannot be trusted for MPC code because
+ * the precompile short-circuits during estimation - so over-setting is free and under-setting
+ * burns the fee for nothing. At the measured rate even a full 192-cell message needs only 58M, so
+ * the cap below cannot bind in practice.
  */
 const MPC_GAS_MESSAGE_BASE = 3_000_000n
 const MPC_GAS_PER_CELL = 550_000n
