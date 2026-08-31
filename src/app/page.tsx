@@ -19,7 +19,7 @@ import {
 } from "@/components/landing/Sections"
 
 export const metadata: Metadata = {
-  title: "Nodea - AI agents buy GPU compute without publishing what they bought",
+  title: "Nodea - Buy GPU compute without publishing what you paid to think",
   description:
     "Encrypted DeAI compute on COTI. Prompts sealed per node, fees settled as ciphertext, and SLAs " +
     "judged inside a garbled circuit that never sees a plaintext price.",
