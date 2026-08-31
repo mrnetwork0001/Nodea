@@ -155,11 +155,20 @@ export async function readPrompt(
   const channel = promptChannelContract(channelAddress, signer as unknown as ContractRunner)
   const chunkCount = Number(await channel.getMessageChunkCount(messageId))
 
-  const parts: string[] = []
-  for (let i = 0; i < chunkCount; i++) {
-    const ciphertext = await channel.getMessageChunk(messageId, i)
-    parts.push((await signer.decryptValue(normalizeCtString(ciphertext))) as string)
-  }
+  // Fetched in one wave rather than one at a time. A chunk is 24 bytes, so a full message is up to
+  // 64 separate `eth_call`s - and awaiting them in sequence made reading a 1KB answer take 20
+  // seconds from a fast connection, and over three minutes in a browser. That delay landed on
+  // exactly the wrong screen: the one showing the thing the agent paid for.
+  //
+  // The count is bounded by the contract at 64, so this cannot become an unbounded fan-out.
+  const ciphertexts = await Promise.all(
+    Array.from({ length: chunkCount }, (_, i) => channel.getMessageChunk(messageId, i)),
+  )
+
+  // Decryption is local AES against the caller's own key - no network, so order is free to keep.
+  const parts = await Promise.all(
+    ciphertexts.map((ciphertext) => signer.decryptValue(normalizeCtString(ciphertext))),
+  )
   return parts.join("")
 }
 
@@ -292,6 +301,25 @@ function sliceByBytes(text: string, from: number, maxBytes: number): string {
 }
 
 /**
+ * Read only the first chunk of a message.
+ *
+ * The result envelope puts its prefix and job id in the first 14 bytes, and a chunk holds 24 - so
+ * one call is enough to decide whether a message is worth reading in full. Without this, scanning
+ * for an older job's answer means fully decrypting every newer message on the way to it, and that
+ * cost grows with the inbox forever.
+ */
+async function readHeader(
+  signer: CotiSigner,
+  channelAddress: string,
+  messageId: number,
+): Promise<string> {
+  const channel = promptChannelContract(channelAddress, signer as unknown as ContractRunner)
+  if (Number(await channel.getMessageChunkCount(messageId)) === 0) return ""
+  const ciphertext = await channel.getMessageChunk(messageId, 0)
+  return (await signer.decryptValue(normalizeCtString(ciphertext))) as string
+}
+
+/**
  * Find and decrypt the result for a job.
  *
  * Scans the caller's inbox newest-first for envelopes matching this job. The channel already
@@ -312,11 +340,27 @@ export async function readResult(
   let provenance: ResultProvenance | undefined
 
   for (const id of ids) {
+    // Peek first. Most of an inbox is prompts and other jobs' answers, and each one read in full
+    // is up to 64 round trips spent proving it was not the one wanted.
+    let header: string
+    try {
+      header = await readHeader(signer, channelAddress, id)
+    } catch {
+      continue // not ours to read, or not a text payload
+    }
+
+    if (!header.startsWith(`${RESULT_PREFIX}|`) && !header.startsWith(`${LEGACY_PREFIX}|`)) continue
+
+    // `NODEA2|13|` - the job id lands well inside the first chunk, so a mismatch is rejected
+    // before fetching the body. If the chunk truncated before it, fall through and read properly.
+    const peeked = header.split("|")
+    if (peeked.length > 2 && peeked[2] !== "" && Number(peeked[1]) !== jobId) continue
+
     let decrypted: string
     try {
       decrypted = await readPrompt(signer, channelAddress, id)
     } catch {
-      continue // not ours to read, or not a text payload
+      continue
     }
 
     const versioned = decrypted.startsWith(`${RESULT_PREFIX}|`)
