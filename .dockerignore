@@ -1,0 +1,11 @@
+# Keep the daemon image's build context small and, more importantly, keyless.
+.env
+.env.*
+node_modules
+.next
+artifacts
+cache
+.hardhat
+.git
+docs
+public

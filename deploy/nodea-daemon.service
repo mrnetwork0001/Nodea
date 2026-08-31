@@ -1,0 +1,65 @@
+# Nodea GPU node daemon.
+#
+#   sudo cp deploy/nodea-daemon.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now nodea-daemon
+#
+# Written to be a guest on a shared machine. It has no ports, no privileges it does not need, and
+# hard ceilings on memory and CPU so it cannot starve whatever else is already running.
+
+[Unit]
+Description=Nodea GPU node daemon
+Documentation=https://github.com/mrnetwork0001/Nodea
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nodea
+Group=nodea
+WorkingDirectory=/opt/nodea
+
+# Keys live outside the checkout, owned by nodea, mode 600. A `git pull` can never touch them and
+# they are not in any build context.
+EnvironmentFile=/etc/nodea/nodea.env
+
+# Absolute path: a service unit has no shell profile, so nvm's node is invisible here.
+ExecStart=/usr/bin/node /opt/nodea/node_modules/.bin/tsx /opt/nodea/agent/node-daemon.ts
+
+# A node that stops answering while still advertising `active` accrues breaches, and each one is
+# permanent in a public record. So: always restart. StartLimit prevents a genuinely broken build
+# from becoming a restart storm that costs the whole machine.
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+# --- ceilings, so a leak here cannot take the neighbours down -----------------
+MemoryMax=512M
+MemoryHigh=384M
+CPUQuota=50%
+TasksMax=64
+
+# --- confinement --------------------------------------------------------------
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+# ProtectSystem=strict makes everything read-only; the daemon writes nothing but logs.
+ReadWritePaths=
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nodea-daemon
+
+[Install]
+WantedBy=multi-user.target

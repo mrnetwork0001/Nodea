@@ -113,8 +113,10 @@ All 27 nodes belong to one operator served by one daemon. If it stops, every job
 those nodes sits escrowed until the agent reclaims — **and each expiry counts as a breach against
 the node**, permanently, in a public record.
 
-There is no restart logic. An unhandled RPC error exits the process. Run it under systemd or pm2
-with `Restart=always` before you publish anything, and watch that it is alive.
+The daemon now absorbs the transient cases itself - it retries a failing job three times, backs off
+30 seconds on an RPC error rather than exiting, and abandons a job it cannot serve instead of
+crashing on it. Everything else is systemd's job. Run it under the unit in
+[`../deploy/README.md`](../deploy/README.md), and kill it once to watch it come back.
 
 ### Operator gas is consumed per job
 
@@ -149,19 +151,15 @@ and it is gone if a visitor clears site data. The UI says so and offers a backup
 
 ## Hosting
 
-The app has only ever run on `localhost`. Going public means deploying it.
+The app has only ever run on `localhost`, and the daemon has only ever run on yours. Going public
+means deploying both - Vercel for the console, your own machine for the daemon.
 
-```bash
-npx vercel
-```
+[`../deploy/README.md`](../deploy/README.md) has both, including how to run the daemon beside
+existing services without disturbing them.
 
-No environment variables are required: `deployments/cotiMainnet.json` is committed, so the
-addresses ship with the build. Set `NEXT_PUBLIC_NODEA_*` only to point a deployment at different
-contracts.
-
-**Never put `NODEA_*` or `ZEROG_*` keys in the hosting environment.** The web app does not read
-them — every private key in this project belongs to the CLI and the daemon on your own machine. A
-key in a Vercel environment variable is a key in a build log.
+The rule that matters either way: **never put `NODEA_*` or `ZEROG_*` keys in the hosting
+environment.** The web app does not read them - every private key in this project belongs to the
+CLI and the daemon. A key in a Vercel environment variable is a key in a build log.
 
 After deploying, re-run **§6** against the public URL. A wallet behaves differently over HTTPS on a
 real domain than over `http://localhost`.
