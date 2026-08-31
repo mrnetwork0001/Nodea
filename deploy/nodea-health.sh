@@ -38,14 +38,27 @@ if [ -z "$WEI_HEX" ]; then
   exit 2
 fi
 
-# Integer arithmetic only - dc is in coreutils, bc often is not. Compare in milli-COTI so the
-# threshold can carry three decimals without floating point. `Ai` restores decimal input after the
-# hex balance is pushed; without it dc keeps reading base 16 and the divisors come out wrong.
-MILLI=$(printf '%s\n' "16i ${WEI_HEX#0x} Ai 1000 * 1000000000000000000 / p" | tr 'a-f' 'A-F' | dc)
-MIN_MILLI=$(printf '%s' "$MIN_COTI" | awk '{ printf "%d", $1 * 1000 }')
+# awk only. The obvious tools are not safe to assume: `dc` ships in the bc package rather than
+# coreutils and a minimal Ubuntu has neither, while shell arithmetic is 64-bit and would overflow
+# above ~9.2 COTI. awk is Essential on every Debian derivative and its doubles carry ~15 significant
+# digits, so a balance is exact to far beyond the milli-COTI this threshold cares about.
+COTI=$(printf '%s' "${WEI_HEX#0x}" | awk '{
+  s = tolower($0); v = 0
+  for (i = 1; i <= length(s); i++) {
+    d = index("0123456789abcdef", substr(s, i, 1)) - 1
+    if (d < 0) exit 1
+    v = v * 16 + d
+  }
+  printf "%.4f", v / 1e18
+}') || COTI=""
 
-if [ "$MILLI" -lt "$MIN_MILLI" ]; then
-  echo "nodea-health: operator $ADDRESS is at $((MILLI / 1000)).$(printf '%03d' $((MILLI % 1000))) COTI, below $MIN_COTI."
+if [ -z "$COTI" ]; then
+  echo "nodea-health: could not parse the balance $WEI_HEX" >&2
+  exit 2
+fi
+
+if awk -v a="$COTI" -v b="$MIN_COTI" 'BEGIN { exit !(a < b) }'; then
+  echo "nodea-health: operator $ADDRESS is at $COTI COTI, below $MIN_COTI."
   echo "Top it up. Once it hits zero, settlements stop and every node starts taking SLA breaches."
   exit 1
 fi
