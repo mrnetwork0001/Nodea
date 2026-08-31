@@ -12,6 +12,7 @@
  */
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { Wordmark } from "@/components/Wordmark"
 
 const LINKS = [
   { href: "#problem", label: "Problem" },
@@ -40,11 +41,8 @@ export function LandingNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-void-600 bg-void/85 backdrop-blur-md">
       <nav className="shell flex h-16 items-center justify-between gap-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="h-2.5 w-2.5 rounded-sm bg-acid" />
-          <span className="font-display text-lg font-extrabold uppercase tracking-tighter">
-            Nodea
-          </span>
+        <Link href="/" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
+          <Wordmark className="h-7 w-auto sm:h-8" priority />
         </Link>
 
         <ul className="hidden items-center gap-6 md:flex lg:gap-8">
