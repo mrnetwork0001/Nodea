@@ -12,6 +12,12 @@ Documentation=https://github.com/mrnetwork0001/Nodea
 After=network-online.target
 Wants=network-online.target
 
+# Restart rate limiting lives in [Unit], not [Service] - systemd 230+ ignores it there with only a
+# log line to say so. Without these a permanently broken build becomes an unbounded restart storm
+# on a machine that is hosting other people's work.
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
 [Service]
 Type=simple
 User=nodea
@@ -30,8 +36,6 @@ ExecStart=/usr/bin/node /opt/nodea/node_modules/.bin/tsx /opt/nodea/agent/node-d
 # from becoming a restart storm that costs the whole machine.
 Restart=always
 RestartSec=10
-StartLimitIntervalSec=300
-StartLimitBurst=10
 
 # --- ceilings, so a leak here cannot take the neighbours down -----------------
 MemoryMax=512M
